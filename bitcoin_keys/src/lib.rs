@@ -21,11 +21,10 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub mod scalar;
 pub mod ecdsa;
 pub mod schnorr;
 
-pub use scalar::Scalar;
+pub use secp256k1::{self, scalar::Scalar};
 pub use schnorr::{XOnlyPublicKey, XOnlyPrivateKey, XOnlyKeyPair};
 
 /// Public key that may be serialized as uncompressed, used in legacy addresses only.
