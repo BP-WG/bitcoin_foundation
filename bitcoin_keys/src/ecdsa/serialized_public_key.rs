@@ -151,6 +151,20 @@ impl PartialEq for SerializedPublicKey {
 impl Eq for SerializedPublicKey {
 }
 
+impl PartialOrd for SerializedPublicKey {
+    #[inline]
+    fn partial_cmp(&self, other: &SerializedPublicKey) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for SerializedPublicKey {
+    #[inline]
+    fn cmp(&self, other: &SerializedPublicKey) -> core::cmp::Ordering {
+        (**self).cmp(&**other)
+    }
+}
+
 impl core::hash::Hash for SerializedPublicKey {
     #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
