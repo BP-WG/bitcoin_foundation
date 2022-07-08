@@ -276,7 +276,7 @@ mod alloc_impls {
     impl From<SerializedPublicKey> for Vec<u8> {
         #[inline]
         fn from(value: SerializedPublicKey) -> Self {
-            value.as_slice().into()
+            value.to_vec()
         }
     }
 
