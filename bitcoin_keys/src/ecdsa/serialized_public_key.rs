@@ -56,13 +56,13 @@ impl SerializedPublicKey {
     /// created from.
     #[inline]
     pub fn len(&self) -> usize {
-        (**self).len()
+        self.as_slice().len()
     }
 
     /// Creates an iterator of bytes.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> {
-        (**self).iter()
+        self.as_slice().iter()
     }
 
     /// Returns the serialized bytes as a slice.
@@ -71,25 +71,6 @@ impl SerializedPublicKey {
     /// kye this was created from.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
-        &**self
-    }
-    
-    /// Returns raw pointer pointing to the beginning of the serialized bytes.
-    ///
-    /// To maintain memory safety the memory behind the pointer MUST NOT be accessed after `self`
-    /// is dropped or moved or mutably borrowed. You also MUST NOT write to the memory behind the
-    /// pointer. The memory is only valid for up to `self.len()` bytes.
-    #[inline]
-    pub fn as_ptr(&self) -> *const u8 {
-        (**self).as_ptr()
-    }
-}
-
-impl core::ops::Deref for SerializedPublicKey {
-    type Target = [u8];
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
         // This produces a beautiful, short, branch-free assembly :)
         //
         // If the key format is uncompressed, the zeroth byte is 4, 2 or 3 otherwise.
@@ -101,19 +82,38 @@ impl core::ops::Deref for SerializedPublicKey {
 
         &self.data[..(33 + (usize::from(self.data[0] & 4) * 8))]
     }
+    
+    /// Returns raw pointer pointing to the beginning of the serialized bytes.
+    ///
+    /// To maintain memory safety the memory behind the pointer MUST NOT be accessed after `self`
+    /// is dropped or moved or mutably borrowed. You also MUST NOT write to the memory behind the
+    /// pointer. The memory is only valid for up to `self.len()` bytes.
+    #[inline]
+    pub fn as_ptr(&self) -> *const u8 {
+        self.as_slice().as_ptr()
+    }
+}
+
+impl core::ops::Deref for SerializedPublicKey {
+    type Target = [u8];
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
+    }
 }
 
 impl AsRef<[u8]> for SerializedPublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        &**self
+        self.as_slice()
     }
 }
 
 impl core::borrow::Borrow<[u8]> for SerializedPublicKey {
     #[inline]
     fn borrow(&self) -> &[u8] {
-        &**self
+        self.as_slice()
     }
 }
 
@@ -144,7 +144,7 @@ impl IntoIterator for SerializedPublicKey {
 impl PartialEq for SerializedPublicKey {
     #[inline]
     fn eq(&self, other: &SerializedPublicKey) -> bool {
-        **self == **other
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -161,14 +161,14 @@ impl PartialOrd for SerializedPublicKey {
 impl Ord for SerializedPublicKey {
     #[inline]
     fn cmp(&self, other: &SerializedPublicKey) -> core::cmp::Ordering {
-        (**self).cmp(&**other)
+        self.as_slice().cmp(other.as_slice())
     }
 }
 
 impl core::hash::Hash for SerializedPublicKey {
     #[inline]
     fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
-        <[u8] as core::hash::Hash>::hash(&**self, state)
+        <[u8] as core::hash::Hash>::hash(self.as_slice(), state)
     }
 }
 
@@ -276,7 +276,7 @@ mod alloc_impls {
     impl From<SerializedPublicKey> for Vec<u8> {
         #[inline]
         fn from(value: SerializedPublicKey) -> Self {
-            value.as_slice().into()
+            value.to_vec()
         }
     }
 
