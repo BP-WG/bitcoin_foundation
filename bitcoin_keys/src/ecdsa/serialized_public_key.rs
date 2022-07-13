@@ -73,14 +73,14 @@ impl SerializedPublicKey {
     pub fn as_slice(&self) -> &[u8] {
         // This produces a beautiful, short, branch-free assembly :)
         //
-        // If the key format is uncompressed, the zeroth byte is 4, 2 or 3 otherwise.
-        // Thus the single bit is sufficient to decide the length.
+        // If the key format is uncompressed, the zeroth byte is 4 - and it is 2 or 3 otherwise.
+        // Thus the third least significant bit is sufficient to decide the length.
         // Multiplying by 8 we get 32 or 0, as needed.
 
         // Debug check our assumptions.
         debug_assert!(self.data[0] == 4 || self.data[0] == 2 || self.data[0] == 3);
 
-        &self.data[..(33 + (usize::from(self.data[0] & 4) * 8))]
+        &self.data[..(33 + (usize::from(self.data[0] & 0b100) * 8))]
     }
     
     /// Returns raw pointer pointing to the beginning of the serialized bytes.
