@@ -161,7 +161,25 @@ impl PartialOrd for SerializedPublicKey {
 impl Ord for SerializedPublicKey {
     #[inline]
     fn cmp(&self, other: &SerializedPublicKey) -> core::cmp::Ordering {
-        self.as_slice().cmp(other.as_slice())
+        // Optimization inspired by Bitcoin Core code.
+        //
+        // Explanation: naively, we could call `as_slice()` on both and compare those,
+        // however the first, most significant, byte is compared regardless of the size.
+        // As of writing, LLVM doesn't see this but we can manually unroll.
+        // Then LLVM skips length computation entirely if the first bytes are not equal.
+        //
+        // If the the first bytes are equal, LLVM sees that the length doesn't need to be computed
+        // twice (it only depends on the first byte) so it also removes duplicate computation.
+        // Since we already checked the first byte we skip it which adds two more instructions but
+        // those would be executed within `memcmp` anyway.
+
+        let left = self.as_slice();
+        let right = other.as_slice();
+        if left[0] == right[0] {
+            left[1..].cmp(&right[1..])
+        } else {
+            left[0].cmp(&right[0])
+        }
     }
 }
 
