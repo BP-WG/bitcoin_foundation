@@ -38,7 +38,7 @@ impl SerializedPublicKey {
             },
             KeyFormat::Compressed => {
                 let serialized = key.serialize();
-                debug_assert!(serialized[0] == 2 || serialized[0] == 3, "unexpected first byte {}, should've been 2 or 3", serialized[0]);
+                debug_assert!(serialized[0] == 2 || serialized[0] == 3, "unexpected value {:#04x} in the first byte, the value must be either 0x02 or 0x03", serialized[0]);
                 let mut data = [0u8; 65];
                 data[..33].copy_from_slice(&serialized);
                 data

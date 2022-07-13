@@ -335,7 +335,7 @@ pub struct KeyNotCompressedError {
 
 impl fmt::Display for KeyNotCompressedError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("the key is not compressed")
+        f.write_str("an uncompressed key type is used in a context requiring compressed keys only")
     }
 }
 
