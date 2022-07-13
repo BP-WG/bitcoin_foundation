@@ -59,7 +59,7 @@ impl SerializedPublicKey {
         self.as_slice().len()
     }
 
-    /// Creates an iterator of bytes.
+    /// Creates an iterator over the serialized bytes.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> {
         self.as_slice().iter()
@@ -68,7 +68,7 @@ impl SerializedPublicKey {
     /// Returns the serialized bytes as a slice.
     ///
     /// The length of the returned slice will be either 33 or 65, depending on the format of the
-    /// kye this was created from.
+    /// key this was created from.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         // This produces a beautiful, short, branch-free assembly :)
