@@ -38,7 +38,7 @@ impl SerializedPublicKey {
             },
             KeyFormat::Compressed => {
                 let serialized = key.serialize();
-                debug_assert!(serialized[0] == 2 || serialized[0] == 3, "unexpected first byte {}, should've been 2 or 3", serialized[0]);
+                debug_assert!(serialized[0] == 2 || serialized[0] == 3, "unexpected value {:#04x} in the first byte, the value must be either 0x02 or 0x03", serialized[0]);
                 let mut data = [0u8; 65];
                 data[..33].copy_from_slice(&serialized);
                 data
@@ -59,7 +59,7 @@ impl SerializedPublicKey {
         self.as_slice().len()
     }
 
-    /// Creates an iterator of bytes.
+    /// Creates an iterator over the serialized bytes.
     #[inline]
     pub fn iter(&self) -> core::slice::Iter<'_, u8> {
         self.as_slice().iter()
@@ -68,19 +68,19 @@ impl SerializedPublicKey {
     /// Returns the serialized bytes as a slice.
     ///
     /// The length of the returned slice will be either 33 or 65, depending on the format of the
-    /// kye this was created from.
+    /// key this was created from.
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
         // This produces a beautiful, short, branch-free assembly :)
         //
-        // If the key format is uncompressed, the zeroth byte is 4, 2 or 3 otherwise.
-        // Thus the single bit is sufficient to decide the length.
+        // If the key format is uncompressed, the zeroth byte is 4 - and it is 2 or 3 otherwise.
+        // Thus the third least significant bit is sufficient to decide the length.
         // Multiplying by 8 we get 32 or 0, as needed.
 
         // Debug check our assumptions.
         debug_assert!(self.data[0] == 4 || self.data[0] == 2 || self.data[0] == 3);
 
-        &self.data[..(33 + (usize::from(self.data[0] & 4) * 8))]
+        &self.data[..(33 + (usize::from(self.data[0] & 0b100) * 8))]
     }
     
     /// Returns raw pointer pointing to the beginning of the serialized bytes.
@@ -161,7 +161,25 @@ impl PartialOrd for SerializedPublicKey {
 impl Ord for SerializedPublicKey {
     #[inline]
     fn cmp(&self, other: &SerializedPublicKey) -> core::cmp::Ordering {
-        self.as_slice().cmp(other.as_slice())
+        // Optimization inspired by Bitcoin Core code.
+        //
+        // Explanation: naively, we could call `as_slice()` on both and compare those,
+        // however the first, most significant, byte is compared regardless of the size.
+        // As of writing, LLVM doesn't see this but we can manually unroll.
+        // Then LLVM skips length computation entirely if the first bytes are not equal.
+        //
+        // If the the first bytes are equal, LLVM sees that the length doesn't need to be computed
+        // twice (it only depends on the first byte) so it also removes duplicate computation.
+        // Since we already checked the first byte we skip it which adds two more instructions but
+        // those would be executed within `memcmp` anyway.
+
+        let left = self.as_slice();
+        let right = other.as_slice();
+        if left[0] == right[0] {
+            left[1..].cmp(&right[1..])
+        } else {
+            left[0].cmp(&right[0])
+        }
     }
 }
 

@@ -38,17 +38,21 @@ pub enum KeyFormat {
 }
 
 impl KeyFormat {
-    /// Returns `true` if the format is `Compressed`.
+    /// Returns `true` if the format is [`Compressed`].
     ///
     /// Shorthand for matching/comparing.
+    ///
+    /// [`Compressed`]: Self::Compressed
     #[inline]
     pub fn is_compressed(self) -> bool {
         self == KeyFormat::Compressed
     }
 
-    /// Returns `true` if the format is `Uncompressed`.
+    /// Returns `true` if the format is [`Uncompressed`].
     ///
     /// Shorthand for matching/comparing.
+    ///
+    /// [`Uncompressed`]: Self::Uncompressed
     #[inline]
     pub fn is_uncompressed(self) -> bool {
         self == KeyFormat::Uncompressed
@@ -331,7 +335,7 @@ pub struct KeyNotCompressedError {
 
 impl fmt::Display for KeyNotCompressedError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str("the key is not compressed")
+        f.write_str("an uncompressed key type is used in a context requiring compressed keys only")
     }
 }
 
