@@ -23,15 +23,15 @@ impl XOnlyPrivateKey {
     }
 
     /// Computes public key from this private key.
-    pub fn compute_public_key<C: secp256k1::Signing>(&self, context: &Secp256k1<C>) -> secp256k1::XOnlyPublicKey {
+    pub fn compute_public_key<C: secp256k1::Signing>(self, context: &Secp256k1<C>) -> secp256k1::XOnlyPublicKey {
         secp256k1::PublicKey::from_secret_key(context, &self.key).into()
     }
 
-    pub fn add_tweak(&self, tweak: &Scalar) -> Result<Self, secp256k1::Error> {
+    pub fn add_tweak(self, tweak: &Scalar) -> Result<Self, secp256k1::Error> {
         self.key.add_tweak(tweak).map(|key| XOnlyPrivateKey { key })
     }
 
-    pub fn mul_tweak(&self, tweak: &Scalar) -> Result<Self, secp256k1::Error> {
+    pub fn mul_tweak(self, tweak: &Scalar) -> Result<Self, secp256k1::Error> {
         self.key.mul_tweak(tweak).map(|key| XOnlyPrivateKey { key })
     }
 }
@@ -54,16 +54,16 @@ impl XOnlyKeyPair {
     }
 
     /// Returns the public key.
-    pub fn public_key(&self) -> secp256k1::XOnlyPublicKey {
-        secp256k1::PublicKey::from(&self.key).into()
+    pub fn public_key(self) -> secp256k1::XOnlyPublicKey {
+        secp256k1::PublicKey::from(self.key).into()
     }
 
     /// Returns the private key.
-    pub fn private_key(&self) -> XOnlyPrivateKey {
+    pub fn private_key(self) -> XOnlyPrivateKey {
         XOnlyPrivateKey::from_raw(self.key.into())
     }
 
-    pub fn add_tweak<C: secp256k1::Signing + secp256k1::Verification>(&self, context: &Secp256k1<C>, tweak: &Scalar) -> Result<Self, secp256k1::Error> {
+    pub fn add_tweak<C: secp256k1::Signing + secp256k1::Verification>(self, context: &Secp256k1<C>, tweak: &Scalar) -> Result<Self, secp256k1::Error> {
         self.key.add_xonly_tweak(context, tweak).map(|key| XOnlyKeyPair { key })
     }
 }
