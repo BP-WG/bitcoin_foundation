@@ -22,10 +22,10 @@ extern crate alloc;
 extern crate std;
 
 pub mod ecdsa;
-pub mod schnorr;
+pub mod bip340;
 
 pub use secp256k1::{self, scalar::Scalar};
-pub use schnorr::{XOnlyPublicKey, XOnlyPrivateKey, XOnlyKeyPair};
+pub use bip340::{XOnlyPublicKey, XOnlyPrivateKey, XOnlyKeyPair};
 
 /// Public key that may be serialized as uncompressed, used in legacy addresses only.
 ///
