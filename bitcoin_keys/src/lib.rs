@@ -21,38 +21,38 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
-pub mod ecdsa;
-pub mod schnorr;
+pub mod legacy;
+pub mod bip340;
 
 pub use secp256k1::{self, scalar::Scalar};
-pub use schnorr::{XOnlyPublicKey, XOnlyPrivateKey, XOnlyKeyPair};
+pub use bip340::{XOnlyPublicKey, XOnlyPrivateKey, XOnlyKeyPair};
 
 /// Public key that may be serialized as uncompressed, used in legacy addresses only.
 ///
 /// You probably want to use this alias instead of explicitly writing out the type.
-pub type LegacyPublicKey = ecdsa::Legacy<secp256k1::PublicKey>;
+pub type LegacyPublicKey = legacy::Legacy<secp256k1::PublicKey>;
 
 /// Public key that is always serialized as compressed.
 ///
 /// You probably want to use this alias instead of explicitly writing out the type.
-pub type CompressedPublicKey = ecdsa::Compressed<secp256k1::PublicKey>;
+pub type CompressedPublicKey = legacy::Compressed<secp256k1::PublicKey>;
 
 /// Private key that may be serialized as uncompressed, used in legacy addresses only.
 ///
 /// You probably want to use this alias instead of explicitly writing out the type.
-pub type LegacyPrivateKey = ecdsa::Legacy<secp256k1::SecretKey>;
+pub type LegacyPrivateKey = legacy::Legacy<secp256k1::SecretKey>;
 
 /// Private key that is always serialized as compressed.
 ///
 /// You probably want to use this alias instead of explicitly writing out the type.
-pub type CompressedPrivateKey = ecdsa::Compressed<secp256k1::SecretKey>;
+pub type CompressedPrivateKey = legacy::Compressed<secp256k1::SecretKey>;
 
 /// Key pair that may be serialized as uncompressed, used in legacy addresses only.
 ///
 /// You probably want to use this alias instead of explicitly writing out the type.
-pub type LegacyKeyPair = ecdsa::Legacy<secp256k1::KeyPair>;
+pub type LegacyKeyPair = legacy::Legacy<secp256k1::KeyPair>;
 
 /// Key pair that is always serialized as compressed.
 ///
 /// You probably want to use this alias instead of explicitly writing out the type.
-pub type CompressedKeyPair = ecdsa::Compressed<secp256k1::KeyPair>;
+pub type CompressedKeyPair = legacy::Compressed<secp256k1::KeyPair>;

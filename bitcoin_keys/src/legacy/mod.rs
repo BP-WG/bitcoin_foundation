@@ -82,49 +82,49 @@ mod sealed {
     impl Key for secp256k1::KeyPair {}
 
     pub trait PublicKey: Key {
-        fn public_key(&self) -> secp256k1::PublicKey;
+        fn public_key(self) -> secp256k1::PublicKey;
     }
 
     impl PublicKey for secp256k1::PublicKey {
         #[inline]
-        fn public_key(&self) -> secp256k1::PublicKey {
-            *self
+        fn public_key(self) -> secp256k1::PublicKey {
+            self
         }
     }
 
     impl PublicKey for secp256k1::KeyPair {
         #[inline]
-        fn public_key(&self) -> secp256k1::PublicKey {
+        fn public_key(self) -> secp256k1::PublicKey {
             self.into()
         }
     }
 
 
     pub trait PrivateKey: Key {
-        fn private_key(&self) -> secp256k1::SecretKey;
+        fn private_key(self) -> secp256k1::SecretKey;
 
         #[inline]
-        fn compute_public_key<C: secp256k1::Signing>(&self, context: &Secp256k1<C>) -> secp256k1::PublicKey {
+        fn compute_public_key<C: secp256k1::Signing>(self, context: &Secp256k1<C>) -> secp256k1::PublicKey {
             secp256k1::PublicKey::from_secret_key(context, &self.private_key())
         }
     }
 
     impl PrivateKey for secp256k1::SecretKey {
         #[inline]
-        fn private_key(&self) -> secp256k1::SecretKey {
-            *self
+        fn private_key(self) -> secp256k1::SecretKey {
+            self
         }
     }
 
     impl PrivateKey for secp256k1::KeyPair {
         #[inline]
-        fn private_key(&self) -> secp256k1::SecretKey {
+        fn private_key(self) -> secp256k1::SecretKey {
             self.into()
         }
 
         /// Optimized override skips computing
         #[inline]
-        fn compute_public_key<C: secp256k1::Signing>(&self, _context: &Secp256k1<C>) -> secp256k1::PublicKey {
+        fn compute_public_key<C: secp256k1::Signing>(self, _context: &Secp256k1<C>) -> secp256k1::PublicKey {
             self.into()
         }
     }
@@ -156,6 +156,7 @@ impl PrivateKey for secp256k1::KeyPair {}
 /// Old Bitcoin addresses may have internally used an uncompressed public key. This is discouraged
 /// in the new software since it wastes money, among other things, but it may be required to
 /// recover old coins.
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct Legacy<K: Key> {
     key: K,
     format: KeyFormat,
@@ -176,13 +177,13 @@ impl<K: Key> Legacy<K> {
 
     /// Returns the serialization format of this key.
     #[inline]
-    pub fn format(&self) -> KeyFormat {
+    pub fn format(self) -> KeyFormat {
         self.format
     }
 
     /// Returns the underlying secp256k1 key.
     #[inline]
-    pub fn raw_key(&self) -> K {
+    pub fn raw_key(self) -> K {
         self.key
     }
 
@@ -208,7 +209,7 @@ impl<K: Key> Legacy<K> {
     /// The method should only be used when this behavior is known to be correct, e.g. in recovery
     /// tools.
     #[inline]
-    pub fn force_to_compressed(&self) -> Compressed<K> {
+    pub fn force_to_compressed(self) -> Compressed<K> {
         Compressed::from_raw(self.key)
     }
 
@@ -217,7 +218,7 @@ impl<K: Key> Legacy<K> {
     /// The `Eq` trait takes serialization format into account thus same keys with different
     /// formats are considered **not** equal. This method ignores the format when comparing.
     #[inline]
-    pub fn eq_key(&self, rhs: Self) -> bool {
+    pub fn eq_key(self, rhs: Self) -> bool {
         self.key == rhs.key
     }
 }
@@ -232,14 +233,14 @@ impl<K: PublicKey> Legacy<K> {
     /// To avoid performance issues it's recommended to turn the returned value into a slice or
     /// iterator as soon as possible.
     #[inline]
-    pub fn serialize_public_key(&self) -> SerializedPublicKey {
+    pub fn serialize_public_key(self) -> SerializedPublicKey {
         SerializedPublicKey::new(self.key.public_key(), self.format)
     }
 }
 
 impl<K: PrivateKey> Legacy<K> {
     /// Computes a public key from this private key
-    pub fn compute_public_key<C: secp256k1::Signing>(&self, context: &Secp256k1<C>) -> Legacy<secp256k1::PublicKey> {
+    pub fn compute_public_key<C: secp256k1::Signing>(self, context: &Secp256k1<C>) -> Legacy<secp256k1::PublicKey> {
         Legacy::from_raw(self.key.compute_public_key(context), self.format)
     }
 }
@@ -249,6 +250,7 @@ impl<K: PrivateKey> Legacy<K> {
 /// This key may be used in either P2SH or SegWit v0 addresses which are still widely used but are
 /// being replaced by P2TR addresses. New software is encouraged to use P2TR implemented ing the
 /// [`schnorr`](crate::schnorr) module but this may still be required to recover old coins.
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Compressed<K: Key> {
     key: K,
 }
@@ -262,7 +264,7 @@ impl<K: Key> Compressed<K> {
     }
 
     /// Returns the raw key.
-    pub fn raw_key(&self) -> K {
+    pub fn raw_key(self) -> K {
         self.key
     }
 }
@@ -273,14 +275,14 @@ impl<K: PublicKey> Compressed<K> {
     ///
     /// This is generally **not** presented to the user, just used to generate Bitcoin script.
     #[inline]
-    pub fn serialize_public_key(&self) -> [u8; 33] {
+    pub fn serialize_public_key(self) -> [u8; 33] {
         self.key.public_key().serialize()
     }
 }
 
 impl<K: PrivateKey> Compressed<K> {
     /// Computes a public key from this private key
-    pub fn compute_public_key<C: secp256k1::Signing>(&self, context: &Secp256k1<C>) -> Compressed<secp256k1::PublicKey> {
+    pub fn compute_public_key<C: secp256k1::Signing>(self, context: &Secp256k1<C>) -> Compressed<secp256k1::PublicKey> {
         Compressed::from_raw(self.key.compute_public_key(context))
     }
 }
