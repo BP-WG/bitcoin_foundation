@@ -1494,7 +1494,7 @@ impl From<&TaprootScriptTree> for TapTree {
                 .add_leaf_with_ver(depth, leaf_script.script.to_inner(), leaf_script.version)
                 .expect("broken TaprootScriptTree");
         }
-        TapTree::from_builder(builder).expect("broken TaprootScriptTree")
+        TapTree::try_from(builder).expect("broken TaprootScriptTree")
     }
 }
 
@@ -1526,7 +1526,7 @@ mod test {
             let (new_val, _) = val.overflowing_add(1);
             val = new_val;
         }
-        TapTree::from_builder(builder).unwrap()
+        TapTree::try_from(builder).unwrap()
     }
 
     fn test_tree(opcode: u8, depth_map: impl IntoIterator<Item = u8>) {
@@ -1558,7 +1558,7 @@ mod test {
         let script_tree = TaprootScriptTree::from(taptree);
         assert!(script_tree.check().is_ok());
 
-        let instill_tree: TaprootScriptTree = compose_tree(all::OP_RETURN.into_u8(), [0]).into();
+        let instill_tree: TaprootScriptTree = compose_tree(all::OP_RETURN.to_u8(), [0]).into();
         let merged_tree = script_tree
             .clone()
             .join(instill_tree.clone(), DfsOrder::First)
@@ -1577,12 +1577,12 @@ mod test {
         ) {
             (TreeNode::Leaf(leaf_script, 1), _, DfsOrdering::LeftRight)
             | (TreeNode::Leaf(leaf_script, 1), _, DfsOrdering::RightLeft)
-                if leaf_script.script[0] == all::OP_RETURN.into_u8() =>
+                if leaf_script.script[0] == all::OP_RETURN.to_u8() =>
             {
                 // Everything is fine
             }
             (_, TreeNode::Leaf(leaf_script, 1), ordering)
-                if leaf_script.script[0] == all::OP_RETURN.into_u8() =>
+                if leaf_script.script[0] == all::OP_RETURN.to_u8() =>
             {
                 panic!(
                     "instilled tree with script `{:?}` has incorrect DFS ordering {:?}",

@@ -85,8 +85,6 @@ extern crate serde_crate as serde;
 pub mod address;
 pub mod convert;
 pub mod hlc;
-#[cfg(feature = "miniscript")]
-mod parser;
 pub mod taproot;
 mod types;
 

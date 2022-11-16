@@ -80,13 +80,15 @@ impl AddressCompat {
     /// can't be represented as an address.
     pub fn from_script(script: &PubkeyScript, network: bitcoin::Network) -> Option<Self> {
         Address::from_script(script.as_inner(), network)
-            .ok_or(address::Error::UncompressedPubkey)
+            .map_err(|_| address::Error::UncompressedPubkey)
             .and_then(Self::try_from)
             .ok()
     }
 
     /// Returns script corresponding to the given address.
-    pub fn script_pubkey(self) -> PubkeyScript { self.payload.script_pubkey() }
+    pub fn script_pubkey(self) -> PubkeyScript {
+        self.payload.script_pubkey()
+    }
 }
 
 impl From<AddressCompat> for Address {
@@ -111,11 +113,15 @@ impl TryFrom<Address> for AddressCompat {
 }
 
 impl From<AddressCompat> for PubkeyScript {
-    fn from(compact: AddressCompat) -> Self { Address::from(compact).script_pubkey().into() }
+    fn from(compact: AddressCompat) -> Self {
+        Address::from(compact).script_pubkey().into()
+    }
 }
 
 impl Display for AddressCompat {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result { Display::fmt(&Address::from(*self), f) }
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        Display::fmt(&Address::from(*self), f)
+    }
 }
 
 impl FromStr for AddressCompat {
@@ -175,7 +181,9 @@ impl AddressPayload {
 
     /// Constructs payload from a given address. Fails on future (post-taproot)
     /// witness types with `None`.
-    pub fn from_address(address: Address) -> Option<Self> { Self::from_payload(address.payload) }
+    pub fn from_address(address: Address) -> Option<Self> {
+        Self::from_payload(address.payload)
+    }
 
     /// Constructs payload from rust-bitcoin [`Payload`]. Fails on future
     /// (post-taproot) witness types with `None`.
@@ -184,7 +192,7 @@ impl AddressPayload {
             Payload::PubkeyHash(pkh) => AddressPayload::PubkeyHash(pkh),
             Payload::ScriptHash(sh) => AddressPayload::ScriptHash(sh),
             Payload::WitnessProgram { version, program }
-                if version.into_num() == 0 && program.len() == 20 =>
+                if version.to_num() == 0 && program.len() == 20 =>
             {
                 AddressPayload::WPubkeyHash(
                     WPubkeyHash::from_slice(&program)
@@ -192,7 +200,7 @@ impl AddressPayload {
                 )
             }
             Payload::WitnessProgram { version, program }
-                if version.into_num() == 0 && program.len() == 32 =>
+                if version.to_num() == 0 && program.len() == 32 =>
             {
                 AddressPayload::WScriptHash(
                     WScriptHash::from_slice(&program)
@@ -200,7 +208,7 @@ impl AddressPayload {
                 )
             }
             Payload::WitnessProgram { version, program }
-                if version.into_num() == 1 && program.len() == 32 =>
+                if version.to_num() == 1 && program.len() == 32 =>
             {
                 AddressPayload::Taproot {
                     output_key: TweakedPublicKey::dangerous_assume_tweaked(
@@ -216,7 +224,9 @@ impl AddressPayload {
     /// Constructs payload from a given `scriptPubkey`. Fails on future
     /// (post-taproot) witness types with `None`.
     pub fn from_script(script: &PubkeyScript) -> Option<Self> {
-        Address::from_script(script.as_inner(), Network::Bitcoin).and_then(Self::from_address)
+        Address::from_script(script.as_inner(), Network::Bitcoin)
+            .ok()
+            .and_then(Self::from_address)
     }
 
     /// Returns script corresponding to the given address.
@@ -260,7 +270,7 @@ impl TryFrom<Payload> for AddressPayload {
         Ok(match payload {
             Payload::PubkeyHash(hash) => AddressPayload::PubkeyHash(hash),
             Payload::ScriptHash(hash) => AddressPayload::ScriptHash(hash),
-            Payload::WitnessProgram { version, program } if version.into_num() == 0u8 => {
+            Payload::WitnessProgram { version, program } if version.to_num() == 0u8 => {
                 if program.len() == 32 {
                     AddressPayload::WScriptHash(
                         WScriptHash::from_slice(&program)
@@ -278,7 +288,7 @@ impl TryFrom<Payload> for AddressPayload {
                     )
                 }
             }
-            Payload::WitnessProgram { version, program } if version.into_num() == 1u8 => {
+            Payload::WitnessProgram { version, program } if version.to_num() == 1u8 => {
                 if program.len() == 32 {
                     AddressPayload::Taproot {
                         output_key: TweakedPublicKey::dangerous_assume_tweaked(
@@ -294,14 +304,16 @@ impl TryFrom<Payload> for AddressPayload {
                 }
             }
             Payload::WitnessProgram { version, .. } => {
-                return Err(address::Error::InvalidWitnessVersion(version.into_num()))
+                return Err(address::Error::InvalidWitnessVersion(version.to_num()))
             }
         })
     }
 }
 
 impl From<AddressPayload> for PubkeyScript {
-    fn from(ap: AddressPayload) -> Self { ap.into_address(Network::Bitcoin).script_pubkey().into() }
+    fn from(ap: AddressPayload) -> Self {
+        ap.into_address(Network::Bitcoin).script_pubkey().into()
+    }
 }
 
 /// Errors parsing address strings.
@@ -415,7 +427,9 @@ impl AddressFormat {
 }
 
 impl From<Address> for AddressFormat {
-    fn from(address: Address) -> Self { address.payload.into() }
+    fn from(address: Address) -> Self {
+        address.payload.into()
+    }
 }
 
 impl From<Payload> for AddressFormat {
@@ -424,18 +438,16 @@ impl From<Payload> for AddressFormat {
             Payload::PubkeyHash(_) => AddressFormat::P2pkh,
             Payload::ScriptHash(_) => AddressFormat::P2sh,
             Payload::WitnessProgram { version, program }
-                if version.into_num() == 0 && program.len() == 32 =>
+                if version.to_num() == 0 && program.len() == 32 =>
             {
                 AddressFormat::P2wsh
             }
             Payload::WitnessProgram { version, program }
-                if version.into_num() == 0 && program.len() == 20 =>
+                if version.to_num() == 0 && program.len() == 20 =>
             {
                 AddressFormat::P2wpkh
             }
-            Payload::WitnessProgram { version, .. } if version.into_num() == 1 => {
-                AddressFormat::P2tr
-            }
+            Payload::WitnessProgram { version, .. } if version.to_num() == 1 => AddressFormat::P2tr,
             Payload::WitnessProgram { version, .. } => AddressFormat::Future(version),
         }
     }
@@ -491,7 +503,9 @@ impl FromStr for AddressNetwork {
 }
 
 impl From<Address> for AddressNetwork {
-    fn from(address: Address) -> Self { address.network.into() }
+    fn from(address: Address) -> Self {
+        address.network.into()
+    }
 }
 
 impl From<bitcoin::Network> for AddressNetwork {

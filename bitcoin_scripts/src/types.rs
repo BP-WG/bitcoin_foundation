@@ -93,7 +93,7 @@ impl PubkeyScript {
     /// Address generation is not possible for bare bitcoin_scripts and P2PK; in this
     /// case the function returns `None`.
     pub fn address(&self, network: Network) -> Option<Address> {
-        Address::from_script(self.as_inner(), network)
+        Address::from_script(self.as_inner(), network).ok()
     }
 
     /// Returns witness version of the `scriptPubkey`, if any
@@ -292,16 +292,16 @@ impl strict_encoding::Strategy for TaprootWitness {
     type Strategy = strict_encoding::strategies::BitcoinConsensus;
 }
 
-impl bitcoin::consensus::Encodable for TaprootWitness {
-    fn consensus_encode<W: Write>(&self, writer: W) -> Result<usize, io::Error> {
+impl consensus::Encodable for TaprootWitness {
+    fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         Witness::from(self).consensus_encode(writer)
     }
 }
 
-impl bitcoin::consensus::Decodable for TaprootWitness {
-    fn consensus_decode<D: Read>(d: D) -> Result<Self, bitcoin::consensus::encode::Error> {
+impl consensus::Decodable for TaprootWitness {
+    fn consensus_decode<D: Read + ?Sized>(d: &mut D) -> Result<Self, consensus::encode::Error> {
         TaprootWitness::try_from(Witness::consensus_decode(d)?).map_err(|_| {
-            bitcoin::consensus::encode::Error::ParseFailed("witness does not conform to taproot")
+            consensus::encode::Error::ParseFailed("witness does not conform to taproot")
         })
     }
 }
