@@ -1,0 +1,5 @@
+# This is an add-on that must be added to any dependency using this library
+
+bitcoin_scripts = { path = "../bitcoin_scripts", features = ["all"] }
+
+[workspace]
