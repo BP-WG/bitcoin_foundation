@@ -139,7 +139,9 @@ pub enum DfsTraversalError {
 /// search) order.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 #[derive(StrictEncode, StrictDecode)]
+#[derive(ConfinedEncode, ConfinedDecode)]
 #[strict_encoding(by_order, repr = u8)]
+#[confined_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -210,6 +212,7 @@ impl Not for DfsOrdering {
     Wrapper, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default, Debug, From
 )]
 #[derive(StrictEncode, StrictDecode)]
+#[derive(ConfinedEncode, ConfinedDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
