@@ -1,2 +1,2 @@
 [workspace]
-members = ["bitcoin_keys", "bitcoin_scripts"]
+members = ["bitcoin_keys", "bitcoin_scripts", "bitcoin_blockchain"]
