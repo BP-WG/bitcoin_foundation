@@ -1,12 +1,10 @@
-// Descriptor wallet library extending bitcoin & miniscript functionality
-// by LNP/BP Association (https://lnp-bp.org)
+// BP foundation libraries Bitcoin crates implementing the foundations of
+// Bitcoin protocol by LNP/BP Association (https://lnp-bp.org)
+//
 // Written in 2020-2022 by
 //     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
+// This software is distributed without any warranty.
 //
 // You should have received a copy of the Apache-2.0 License
 // along with this software.
@@ -97,15 +95,21 @@ impl PubkeyScript {
     }
 
     /// Returns witness version of the `scriptPubkey`, if any
-    pub fn witness_version(&self) -> Option<WitnessVersion> { self.0.witness_version() }
+    pub fn witness_version(&self) -> Option<WitnessVersion> {
+        self.0.witness_version()
+    }
 }
 
 impl From<PubkeyHash> for PubkeyScript {
-    fn from(pkh: PubkeyHash) -> Self { Script::new_p2pkh(&pkh).into() }
+    fn from(pkh: PubkeyHash) -> Self {
+        Script::new_p2pkh(&pkh).into()
+    }
 }
 
 impl From<WPubkeyHash> for PubkeyScript {
-    fn from(wpkh: WPubkeyHash) -> Self { Script::new_v0_p2wpkh(&wpkh).into() }
+    fn from(wpkh: WPubkeyHash) -> Self {
+        Script::new_v0_p2wpkh(&wpkh).into()
+    }
 }
 
 /// A content of `scriptSig` from a transaction input
@@ -255,7 +259,9 @@ impl TryFrom<Witness> for TaprootWitness {
 
 impl From<TaprootWitness> for Witness {
     #[inline]
-    fn from(tw: TaprootWitness) -> Self { Witness::from(&tw) }
+    fn from(tw: TaprootWitness) -> Self {
+        Witness::from(&tw)
+    }
 }
 
 impl From<&TaprootWitness> for Witness {
@@ -327,11 +333,15 @@ impl strict_encoding::Strategy for RedeemScript {
 impl RedeemScript {
     /// Computes script commitment hash which participates in [`PubkeyScript`]
     #[inline]
-    pub fn script_hash(&self) -> ScriptHash { self.as_inner().script_hash() }
+    pub fn script_hash(&self) -> ScriptHash {
+        self.as_inner().script_hash()
+    }
 
     /// Generates [`PubkeyScript`] matching given `redeemScript`
     #[inline]
-    pub fn to_p2sh(&self) -> PubkeyScript { Script::new_p2sh(&self.script_hash()).into() }
+    pub fn to_p2sh(&self) -> PubkeyScript {
+        Script::new_p2sh(&self.script_hash()).into()
+    }
 }
 
 impl From<RedeemScript> for SigScript {
@@ -371,17 +381,23 @@ impl WitnessScript {
     /// Computes script commitment which participates in [`Witness`] or
     /// [`RedeemScript`].
     #[inline]
-    pub fn script_hash(&self) -> WScriptHash { self.as_inner().wscript_hash() }
+    pub fn script_hash(&self) -> WScriptHash {
+        self.as_inner().wscript_hash()
+    }
 
     /// Generates [`PubkeyScript`] matching given `witnessScript` for native
     /// SegWit outputs.
     #[inline]
-    pub fn to_p2wsh(&self) -> PubkeyScript { Script::new_v0_p2wsh(&self.script_hash()).into() }
+    pub fn to_p2wsh(&self) -> PubkeyScript {
+        Script::new_v0_p2wsh(&self.script_hash()).into()
+    }
 
     /// Generates [`PubkeyScript`] matching given `witnessScript` for legacy
     /// P2WSH-in-P2SH outputs.
     #[inline]
-    pub fn to_p2sh_wsh(&self) -> PubkeyScript { RedeemScript::from(self.clone()).to_p2sh() }
+    pub fn to_p2sh_wsh(&self) -> PubkeyScript {
+        RedeemScript::from(self.clone()).to_p2sh()
+    }
 }
 
 impl From<WitnessScript> for RedeemScript {
@@ -391,19 +407,27 @@ impl From<WitnessScript> for RedeemScript {
 }
 
 impl From<LockScript> for WitnessScript {
-    fn from(lock_script: LockScript) -> Self { WitnessScript(lock_script.to_inner()) }
+    fn from(lock_script: LockScript) -> Self {
+        WitnessScript(lock_script.to_inner())
+    }
 }
 
 impl From<LockScript> for RedeemScript {
-    fn from(lock_script: LockScript) -> Self { RedeemScript(lock_script.to_inner()) }
+    fn from(lock_script: LockScript) -> Self {
+        RedeemScript(lock_script.to_inner())
+    }
 }
 
 impl From<WitnessScript> for LockScript {
-    fn from(witness_script: WitnessScript) -> Self { LockScript(witness_script.to_inner()) }
+    fn from(witness_script: WitnessScript) -> Self {
+        LockScript(witness_script.to_inner())
+    }
 }
 
 impl From<RedeemScript> for LockScript {
-    fn from(redeem_script: RedeemScript) -> Self { LockScript(redeem_script.to_inner()) }
+    fn from(redeem_script: RedeemScript) -> Self {
+        LockScript(redeem_script.to_inner())
+    }
 }
 
 /// Any valid branch of taproot script spending
@@ -481,7 +505,9 @@ impl strict_encoding::Strategy for TapScript {
 }
 
 impl From<LockScript> for TapScript {
-    fn from(lock_script: LockScript) -> Self { TapScript(lock_script.to_inner()) }
+    fn from(lock_script: LockScript) -> Self {
+        TapScript(lock_script.to_inner())
+    }
 }
 
 impl From<TapScript> for LeafScript {
@@ -506,22 +532,30 @@ impl strict_encoding::Strategy for WitnessProgram {
 
 impl Display for WitnessProgram {
     #[inline]
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result { writeln!(f, "{}", self.0.to_hex()) }
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{}", self.0.to_hex())
+    }
 }
 
 impl From<WPubkeyHash> for WitnessProgram {
     #[inline]
-    fn from(wpkh: WPubkeyHash) -> Self { WitnessProgram(Box::from(&wpkh[..])) }
+    fn from(wpkh: WPubkeyHash) -> Self {
+        WitnessProgram(Box::from(&wpkh[..]))
+    }
 }
 
 impl From<WScriptHash> for WitnessProgram {
     #[inline]
-    fn from(wsh: WScriptHash) -> Self { WitnessProgram(Box::from(&wsh[..])) }
+    fn from(wsh: WScriptHash) -> Self {
+        WitnessProgram(Box::from(&wsh[..]))
+    }
 }
 
 impl From<TweakedPublicKey> for WitnessProgram {
     #[inline]
-    fn from(tpk: TweakedPublicKey) -> Self { WitnessProgram(Box::from(&tpk.serialize()[..])) }
+    fn from(tpk: TweakedPublicKey) -> Self {
+        WitnessProgram(Box::from(&tpk.serialize()[..]))
+    }
 }
 
 /// Scripting data for both transaction output and spending transaction input
@@ -562,7 +596,9 @@ impl Display for ScriptSet {
 impl ScriptSet {
     /// Detects whether the structure contains witness data
     #[inline]
-    pub fn has_witness(&self) -> bool { self.witness != None }
+    pub fn has_witness(&self) -> bool {
+        self.witness != None
+    }
 
     /// Detects whether the structure is either P2SH-P2WPKH or P2SH-P2WSH
     pub fn is_witness_sh(&self) -> bool {
@@ -634,18 +670,24 @@ impl IntoNodeHash for TapLeafHash {
     /// Converts this leaf hash into a generic SHA256 hash value, which can
     /// be used to construct hidden nodes in the tap tree.
     #[inline]
-    fn into_node_hash(self) -> TapNodeHash { TapNodeHash::from_inner(self.into_inner()) }
+    fn into_node_hash(self) -> TapNodeHash {
+        TapNodeHash::from_inner(self.into_inner())
+    }
 }
 
 impl IntoNodeHash for TapBranchHash {
     /// Converts this branch hash into a generic SHA256 hash value, which can
     /// be used to construct hidden nodes in the tap tree.
     #[inline]
-    fn into_node_hash(self) -> TapNodeHash { TapNodeHash::from_inner(self.into_inner()) }
+    fn into_node_hash(self) -> TapNodeHash {
+        TapNodeHash::from_inner(self.into_inner())
+    }
 }
 
 impl IntoNodeHash for TapNodeHash {
     /// This function performs nothing and just returns the self.
     #[inline]
-    fn into_node_hash(self) -> TapNodeHash { self }
+    fn into_node_hash(self) -> TapNodeHash {
+        self
+    }
 }

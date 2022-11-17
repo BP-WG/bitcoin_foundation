@@ -1,12 +1,10 @@
-// Descriptor wallet library extending bitcoin & miniscript functionality
-// by LNP/BP Association (https://lnp-bp.org)
+// BP foundation libraries Bitcoin crates implementing the foundations of
+// Bitcoin protocol by LNP/BP Association (https://lnp-bp.org)
+//
 // Written in 2020-2022 by
 //     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
+// This software is distributed without any warranty.
 //
 // You should have received a copy of the Apache-2.0 License
 // along with this software.
@@ -55,11 +53,15 @@ impl FromHex for HashLock {
 }
 
 impl AsRef<[u8]> for HashLock {
-    fn as_ref(&self) -> &[u8] { &self.0[..] }
+    fn as_ref(&self) -> &[u8] {
+        &self.0[..]
+    }
 }
 
 impl Borrow<[u8]> for HashLock {
-    fn borrow(&self) -> &[u8] { &self.0[..] }
+    fn borrow(&self) -> &[u8] {
+        &self.0[..]
+    }
 }
 
 /// HTLC payment preimage
@@ -81,7 +83,9 @@ pub struct HashPreimage(
 
 impl HashPreimage {
     #[cfg(feature = "keygen")]
-    pub fn random() -> Self { HashPreimage::from_inner(Slice32::random()) }
+    pub fn random() -> Self {
+        HashPreimage::from_inner(Slice32::random())
+    }
 }
 
 impl FromHex for HashPreimage {
@@ -94,13 +98,19 @@ impl FromHex for HashPreimage {
 }
 
 impl DumbDefault for HashPreimage {
-    fn dumb_default() -> Self { Self(Default::default()) }
+    fn dumb_default() -> Self {
+        Self(Default::default())
+    }
 }
 
 impl AsRef<[u8]> for HashPreimage {
-    fn as_ref(&self) -> &[u8] { &self.0[..] }
+    fn as_ref(&self) -> &[u8] {
+        &self.0[..]
+    }
 }
 
 impl Borrow<[u8]> for HashPreimage {
-    fn borrow(&self) -> &[u8] { &self.0[..] }
+    fn borrow(&self) -> &[u8] {
+        &self.0[..]
+    }
 }

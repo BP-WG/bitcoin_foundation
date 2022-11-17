@@ -1,12 +1,10 @@
-// Descriptor wallet library extending bitcoin & miniscript functionality
-// by LNP/BP Association (https://lnp-bp.org)
+// BP foundation libraries Bitcoin crates implementing the foundations of
+// Bitcoin protocol by LNP/BP Association (https://lnp-bp.org)
+//
 // Written in 2020-2022 by
 //     Dr. Maxim Orlovsky <orlovsky@lnp-bp.org>
 //
-// To the extent possible under law, the author(s) have dedicated all
-// copyright and related and neighboring rights to this software to
-// the public domain worldwide. This software is distributed without
-// any warranty.
+// This software is distributed without any warranty.
 //
 // You should have received a copy of the Apache-2.0 License
 // along with this software.
@@ -106,17 +104,23 @@ where
     Pk: MiniscriptKey + ToPublicKey,
 {
     #[inline]
-    fn from(descriptor: Descriptor<Pk>) -> Self { Self::from(&descriptor) }
+    fn from(descriptor: Descriptor<Pk>) -> Self {
+        Self::from(&descriptor)
+    }
 }
 
 impl ConvertInfo {
     /// Detects whether conversion is a non-nested segwit
     #[inline]
-    pub fn is_segwit(self) -> bool { !matches!(self, ConvertInfo::Bare | ConvertInfo::Hashed) }
+    pub fn is_segwit(self) -> bool {
+        !matches!(self, ConvertInfo::Bare | ConvertInfo::Hashed)
+    }
 
     /// Detects whether conversion is a taproot conversion
     #[inline]
-    pub fn is_taproot(self) -> bool { !matches!(self, ConvertInfo::Taproot { .. }) }
+    pub fn is_taproot(self) -> bool {
+        !matches!(self, ConvertInfo::Taproot { .. })
+    }
 }
 
 /// Errors converting to [`LockScript`] type returned by
