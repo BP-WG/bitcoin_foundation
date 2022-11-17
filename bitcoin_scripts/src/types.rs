@@ -55,10 +55,6 @@ impl strict_encoding::Strategy for LockScript {
     type Strategy = strict_encoding::strategies::Wrapped;
 }
 
-impl confined_encoding::Strategy for LockScript {
-    type Strategy = confined_encoding::strategies::Wrapped;
-}
-
 /// A representation of `scriptPubkey` data used during SegWit signing procedure
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
@@ -461,25 +457,8 @@ impl strict_encoding::StrictDecode for LeafScript {
     fn strict_decode<D: Read>(mut d: D) -> Result<Self, strict_encoding::Error> {
         let version = u8::strict_decode(&mut d)?;
         let version = LeafVersion::from_consensus(version)
-            .map_err(|_| consensus::encode::Error::ParseFailed("invalid leaf version"))?;
+            .map_err(|_| bitcoin::consensus::encode::Error::ParseFailed("invalid leaf version"))?;
         let script = LockScript::strict_decode(d)?;
-        Ok(LeafScript { version, script })
-    }
-}
-
-impl confined_encoding::ConfinedEncode for LeafScript {
-    fn confined_encode<E: Write>(&self, mut e: E) -> Result<usize, confined_encoding::Error> {
-        self.version.to_consensus().confined_encode(&mut e)?;
-        self.script.confined_encode(&mut e)
-    }
-}
-
-impl confined_encoding::ConfinedDecode for LeafScript {
-    fn confined_decode<D: Read>(mut d: D) -> Result<Self, confined_encoding::Error> {
-        let version = u8::confined_decode(&mut d)?;
-        let version = LeafVersion::from_consensus(version)
-            .map_err(|_| consensus::encode::Error::ParseFailed("invalid leaf version"))?;
-        let script = LockScript::confined_decode(d)?;
         Ok(LeafScript { version, script })
     }
 }
