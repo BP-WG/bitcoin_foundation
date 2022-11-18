@@ -138,6 +138,7 @@ impl FromStr for AddressCompat {
     Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display, From
 )]
 #[derive(StrictEncode, StrictDecode)]
+// TODO: Support future witness addresses
 pub enum AddressPayload {
     /// P2PKH payload.
     #[from]
