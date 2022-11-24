@@ -21,9 +21,7 @@ use bitcoin::hashes::{hex, Hash};
 use bitcoin::schnorr::TweakedPublicKey;
 use bitcoin::secp256k1::XOnlyPublicKey;
 use bitcoin::util::address::{self, Payload, WitnessVersion};
-use bitcoin::{
-    secp256k1, Address, Network, PubkeyHash, Script, ScriptHash, WPubkeyHash, WScriptHash,
-};
+use bitcoin::{secp256k1, Address, PubkeyHash, Script, ScriptHash, WPubkeyHash, WScriptHash};
 
 use crate::PubkeyScript;
 
@@ -39,7 +37,7 @@ pub enum SegWitInfo {
 
     /// P2SH addresses, which may be pre-segwit, segwit v0 (P2WPK/WSH-in-P2SH),
     /// non-taproot segwit v1 wrapped in P2SH, or future segwit versions
-    /// wrapped in P2SH bitcoin_scripts
+    /// wrapped in P2SH bitcoin
     Ambiguous,
 
     /// Address has a clearly defined segwit version, i.e. P2WPKH, P2WSH, P2TR
@@ -68,34 +66,33 @@ pub struct AddressCompat {
     /// Address payload (see [`AddressPayload`]).
     pub payload: AddressPayload,
 
-    /// Whether address is a part of one of bitcoin testnets
-    pub testnet: bool,
+    /// A type of the network used by the address
+    pub network: AddressNetwork,
 }
 
 impl AddressCompat {
     /// Constructs compatible address for a given `scriptPubkey`.
     /// Returns `None` if the uncompressed key is provided or `scriptPubkey`
     /// can't be represented as an address.
-    pub fn from_script(script: &PubkeyScript, network: bitcoin::Network) -> Option<Self> {
-        Address::from_script(script.as_inner(), network)
+    pub fn from_script(script: &PubkeyScript, network: AddressNetwork) -> Option<Self> {
+        Address::from_script(script.as_inner(), network.bitcoin_network())
             .map_err(|_| address::Error::UncompressedPubkey)
             .and_then(Self::try_from)
             .ok()
     }
 
     /// Returns script corresponding to the given address.
-    pub fn script_pubkey(self) -> PubkeyScript {
-        self.payload.script_pubkey()
-    }
+    pub fn script_pubkey(self) -> PubkeyScript { self.payload.script_pubkey() }
+
+    /// Returns if the address is testnet-, signet- or regtest-specific
+    pub fn is_testnet(self) -> bool { self.network != AddressNetwork::Mainnet }
 }
 
 impl From<AddressCompat> for Address {
     fn from(compact: AddressCompat) -> Self {
-        compact.payload.into_address(if compact.testnet {
-            Network::Testnet
-        } else {
-            Network::Bitcoin
-        })
+        compact
+            .payload
+            .into_address(compact.network.bitcoin_network())
     }
 }
 
@@ -105,21 +102,17 @@ impl TryFrom<Address> for AddressCompat {
     fn try_from(address: Address) -> Result<Self, Self::Error> {
         Ok(AddressCompat {
             payload: address.payload.try_into()?,
-            testnet: address.network != bitcoin::Network::Bitcoin,
+            network: address.network.into(),
         })
     }
 }
 
 impl From<AddressCompat> for PubkeyScript {
-    fn from(compact: AddressCompat) -> Self {
-        Address::from(compact).script_pubkey().into()
-    }
+    fn from(compact: AddressCompat) -> Self { Address::from(compact).script_pubkey().into() }
 }
 
 impl Display for AddressCompat {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&Address::from(*self), f)
-    }
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result { Display::fmt(&Address::from(*self), f) }
 }
 
 impl FromStr for AddressCompat {
@@ -133,12 +126,11 @@ impl FromStr for AddressCompat {
 /// Internal address content. Consists of serialized hashes or x-only key value.
 ///
 /// See also `descriptors::Compact` as a non-copy alternative supporting
-/// bare/custom bitcoin_scripts.
+/// bare/custom scripts.
 #[derive(
     Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display, From
 )]
 #[derive(StrictEncode, StrictDecode)]
-// TODO: Support future witness addresses
 pub enum AddressPayload {
     /// P2PKH payload.
     #[from]
@@ -171,7 +163,7 @@ pub enum AddressPayload {
 
 impl AddressPayload {
     /// Constructs [`Address`] from the payload.
-    pub fn into_address(self, network: Network) -> Address {
+    pub fn into_address(self, network: bitcoin::Network) -> Address {
         Address {
             payload: self.into(),
             network,
@@ -180,9 +172,7 @@ impl AddressPayload {
 
     /// Constructs payload from a given address. Fails on future (post-taproot)
     /// witness types with `None`.
-    pub fn from_address(address: Address) -> Option<Self> {
-        Self::from_payload(address.payload)
-    }
+    pub fn from_address(address: Address) -> Option<Self> { Self::from_payload(address.payload) }
 
     /// Constructs payload from rust-bitcoin [`Payload`]. Fails on future
     /// (post-taproot) witness types with `None`.
@@ -223,7 +213,7 @@ impl AddressPayload {
     /// Constructs payload from a given `scriptPubkey`. Fails on future
     /// (post-taproot) witness types with `None`.
     pub fn from_script(script: &PubkeyScript) -> Option<Self> {
-        Address::from_script(script.as_inner(), Network::Bitcoin)
+        Address::from_script(script.as_inner(), bitcoin::Network::Bitcoin)
             .ok()
             .and_then(Self::from_address)
     }
@@ -311,7 +301,9 @@ impl TryFrom<Payload> for AddressPayload {
 
 impl From<AddressPayload> for PubkeyScript {
     fn from(ap: AddressPayload) -> Self {
-        ap.into_address(Network::Bitcoin).script_pubkey().into()
+        ap.into_address(bitcoin::Network::Bitcoin)
+            .script_pubkey()
+            .into()
     }
 }
 
@@ -426,9 +418,7 @@ impl AddressFormat {
 }
 
 impl From<Address> for AddressFormat {
-    fn from(address: Address) -> Self {
-        address.payload.into()
-    }
+    fn from(address: Address) -> Self { address.payload.into() }
 }
 
 impl From<Payload> for AddressFormat {
@@ -474,6 +464,7 @@ impl FromStr for AddressFormat {
 
 /// Bitcoin network used by the address
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
+#[derive(StrictEncode, StrictDecode)]
 pub enum AddressNetwork {
     /// Bitcoin mainnet
     #[display("mainnet")]
@@ -502,18 +493,34 @@ impl FromStr for AddressNetwork {
 }
 
 impl From<Address> for AddressNetwork {
-    fn from(address: Address) -> Self {
-        address.network.into()
-    }
+    fn from(address: Address) -> Self { address.network.into() }
 }
 
 impl From<bitcoin::Network> for AddressNetwork {
-    fn from(network: Network) -> Self {
+    fn from(network: bitcoin::Network) -> Self {
         match network {
-            Network::Bitcoin => AddressNetwork::Mainnet,
-            Network::Testnet => AddressNetwork::Testnet,
-            Network::Signet => AddressNetwork::Testnet,
-            Network::Regtest => AddressNetwork::Regtest,
+            bitcoin::Network::Bitcoin => AddressNetwork::Mainnet,
+            bitcoin::Network::Testnet => AddressNetwork::Testnet,
+            bitcoin::Network::Signet => AddressNetwork::Testnet,
+            bitcoin::Network::Regtest => AddressNetwork::Regtest,
         }
     }
+}
+
+impl AddressNetwork {
+    /// This convertor is not public since there is an ambiguity which type
+    /// must correspond to the [`AddressNetwork::Testnet`]. Thus, clients of
+    /// this library must propvide their custom convertors taking decisions
+    /// on this question.
+    fn bitcoin_network(self) -> bitcoin::Network {
+        match self {
+            AddressNetwork::Mainnet => bitcoin::Network::Bitcoin,
+            AddressNetwork::Testnet => bitcoin::Network::Testnet,
+            AddressNetwork::Regtest => bitcoin::Network::Signet,
+        }
+    }
+
+    /// Detects whether the network is a kind of test network (testnet, signet,
+    /// regtest).
+    pub fn is_testnet(self) -> bool { self != Self::Mainnet }
 }
