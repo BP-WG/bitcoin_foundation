@@ -13,6 +13,9 @@ edition = "2021"
 rust-version = "1.59.0"
 exclude = []
 
+[lib]
+crate-type = ["lib", "staticlib"]
+
 [dependencies]
 amplify = "3.13.0"
 strict_encoding = "2.0.0-alpha.1"
