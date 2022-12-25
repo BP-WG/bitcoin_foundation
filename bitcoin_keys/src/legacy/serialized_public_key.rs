@@ -55,6 +55,7 @@ impl SerializedPublicKey {
     /// The returned value will be either 33 or 65, depending on the format of the key this was
     /// created from.
     #[inline]
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.as_slice().len()
     }

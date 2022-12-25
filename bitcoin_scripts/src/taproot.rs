@@ -1115,7 +1115,7 @@ impl TaprootScriptTree {
         other_tree: TaprootScriptTree,
         other_dfs_order: DfsOrder,
     ) -> Result<TaprootScriptTree, MaxDepthExceeded> {
-        self.instill(other_tree, &[], other_dfs_order)
+        self.instill(other_tree, [], other_dfs_order)
             .map_err(|_| MaxDepthExceeded)?;
         Ok(self)
     }

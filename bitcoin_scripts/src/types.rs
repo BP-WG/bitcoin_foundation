@@ -618,7 +618,7 @@ impl ScriptSet {
     /// Detects whether the structure contains witness data
     #[inline]
     pub fn has_witness(&self) -> bool {
-        self.witness != None
+        self.witness.is_some()
     }
 
     /// Detects whether the structure is either P2SH-P2WPKH or P2SH-P2WSH
