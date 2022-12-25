@@ -20,25 +20,26 @@
 //! different sources, like *scriptPubKey* in transaction output or *witness*
 //! and *scriptSig* in transaction input. There are many other possible script
 //! containers for Bitcoin script: redeem script, witness script, taproot leaf
-//! bitcoin_scripts of different versions. In fact, any "script" of [`bitcoin::Script`]
-//! type can be used for inputs and outputs. What is a valid script for in one
-//! context will not be a valid script for some other. That would mean that in
-//! principle with existing [`bitcoin::Script`] type every input script can be
-//! used as an output script, leading to potentially harmful code coming from an
-//! unaware developer.
+//! bitcoin_scripts of different versions. In fact, any "script" of
+//! [`bitcoin::Script`] type can be used for inputs and outputs. What is a valid
+//! script for in one context will not be a valid script for some other. That
+//! would mean that in principle with existing [`bitcoin::Script`] type every
+//! input script can be used as an output script, leading to potentially harmful
+//! code coming from an unaware developer.
 //!
 //! While all [`bitcoin::Script`]s have the same parsing rules converting byte
 //! string into a set of instructions (i.e. the same **syntax**), there are
 //! multiple ways how the consensus meaning of these instructions will be
 //! interpreted under different contexts (different **semantics**). Moreover,
-//! the bitcoin_scripts may be nested - or to be committed into some other Bitcoin
-//! script – in a nested structures like in several layers, like *redeemScript*
-//! inside of *scriptSig* used for P2SH, or *tapScript* within *witnessScript*
-//! coming from *witness* field for Taproot. These nested layers do distinguish
-//! on the information they contain, since some of them only commit to the
-//! hashes of the nested bitcoin_scripts ([`bitcoin::ScriptHash`], [`WitnessProgram`])
-//! or public keys ([`bitcoin::PubkeyHash`], [`bitcoin::WPubkeyHash`]), while
-//! other contain the full source of the script.
+//! the bitcoin_scripts may be nested - or to be committed into some other
+//! Bitcoin script – in a nested structures like in several layers, like
+//! *redeemScript* inside of *scriptSig* used for P2SH, or *tapScript* within
+//! *witnessScript* coming from *witness* field for Taproot. These nested layers
+//! do distinguish on the information they contain, since some of them only
+//! commit to the hashes of the nested bitcoin_scripts ([`bitcoin::ScriptHash`],
+//! [`WitnessProgram`]) or public keys ([`bitcoin::PubkeyHash`],
+//! [`bitcoin::WPubkeyHash`]), while other contain the full source of the
+//! script.
 //!
 //! The present type system represents a solution to the problem: it distinguish
 //! different logical types by introducing `Script` wrapper types. It defines

@@ -222,16 +222,12 @@ pub struct DfsPath(Vec<DfsOrder>);
 
 impl AsRef<[DfsOrder]> for DfsPath {
     #[inline]
-    fn as_ref(&self) -> &[DfsOrder] {
-        self.0.as_ref()
-    }
+    fn as_ref(&self) -> &[DfsOrder] { self.0.as_ref() }
 }
 
 impl Borrow<[DfsOrder]> for DfsPath {
     #[inline]
-    fn borrow(&self) -> &[DfsOrder] {
-        self.0.borrow()
-    }
+    fn borrow(&self) -> &[DfsOrder] { self.0.borrow() }
 }
 
 impl Display for DfsPath {
@@ -268,9 +264,7 @@ impl FromStr for DfsPath {
 impl DfsPath {
     /// Initializes a new empty path instance.
     #[inline]
-    pub fn new() -> DfsPath {
-        DfsPath(vec![])
-    }
+    pub fn new() -> DfsPath { DfsPath(vec![]) }
 
     /// Constructs DFS path from an iterator over path steps.
     pub fn with<'path>(iter: impl IntoIterator<Item = &'path DfsOrder>) -> Self {
@@ -282,18 +276,14 @@ impl<'path> IntoIterator for &'path DfsPath {
     type Item = DfsOrder;
     type IntoIter = core::iter::Cloned<core::slice::Iter<'path, DfsOrder>>;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter().cloned()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.0.iter().cloned() }
 }
 
 impl IntoIterator for DfsPath {
     type Item = DfsOrder;
     type IntoIter = std::vec::IntoIter<DfsOrder>;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.0.into_iter() }
 }
 
 impl FromIterator<DfsOrder> for DfsPath {
@@ -370,9 +360,7 @@ impl Branch for BranchNode {
         Some(self.left.subtree_depth()?.max(self.right.subtree_depth()?))
     }
 
-    fn dfs_ordering(&self) -> DfsOrdering {
-        self.dfs_ordering
-    }
+    fn dfs_ordering(&self) -> DfsOrdering { self.dfs_ordering }
 
     fn branch_hash(&self) -> TapBranchHash {
         TapBranchHash::from_node_hashes(
@@ -405,9 +393,7 @@ impl BranchNode {
     /// to bitcoin consensus rules (by the lexicographic order of the node
     /// hash values).
     #[inline]
-    pub fn split(self) -> (TreeNode, TreeNode) {
-        (*self.left, *self.right)
-    }
+    pub fn split(self) -> (TreeNode, TreeNode) { (*self.left, *self.right) }
 
     /// Splits the structure into the left and right nodes, ordered according
     /// to the original DFS order.
@@ -422,30 +408,22 @@ impl BranchNode {
     /// Returns reference for to left (in bitcoin consensus lexicographic
     /// ordering) child node.
     #[inline]
-    pub fn as_left_node(&self) -> &TreeNode {
-        &self.left
-    }
+    pub fn as_left_node(&self) -> &TreeNode { &self.left }
 
     /// Returns reference for to right (in bitcoin consensus lexicographic
     /// ordering) child node.
     #[inline]
-    pub fn as_right_node(&self) -> &TreeNode {
-        &self.right
-    }
+    pub fn as_right_node(&self) -> &TreeNode { &self.right }
 
     /// Returns mutable reference to the left (in bitcoin consensus
     /// lexicographic ordering) child node.
     #[inline]
-    pub(self) fn as_left_node_mut(&mut self) -> &mut TreeNode {
-        &mut self.left
-    }
+    pub(self) fn as_left_node_mut(&mut self) -> &mut TreeNode { &mut self.left }
 
     /// Returns reference to the right (in bitcoin consensus lexicographic
     /// ordering) child node.
     #[inline]
-    pub(self) fn as_right_node_mut(&mut self) -> &mut TreeNode {
-        &mut self.right
-    }
+    pub(self) fn as_right_node_mut(&mut self) -> &mut TreeNode { &mut self.right }
 
     /// Returns reference to the child node at specific DFS `direction`.
     #[inline]
@@ -660,13 +638,9 @@ impl TreeNode {
     }
 
     /// Returns iterator over all subnodes for this node.
-    pub(self) fn nodes(&self) -> TreeNodeIter {
-        TreeNodeIter::from(self)
-    }
+    pub(self) fn nodes(&self) -> TreeNodeIter { TreeNodeIter::from(self) }
 
-    pub(self) fn nodes_mut(&mut self) -> TreeNodeIterMut {
-        TreeNodeIterMut::from(self)
-    }
+    pub(self) fn nodes_mut(&mut self) -> TreeNodeIterMut { TreeNodeIterMut::from(self) }
 
     pub(self) fn lower(&mut self, inc: u8) -> Result<u8, MaxDepthExceeded> {
         let old_depth = self.node_depth();
@@ -709,17 +683,11 @@ impl TreeNode {
 }
 
 impl Node for TreeNode {
-    fn is_hidden(&self) -> bool {
-        matches!(self, TreeNode::Hidden(..))
-    }
+    fn is_hidden(&self) -> bool { matches!(self, TreeNode::Hidden(..)) }
 
-    fn is_branch(&self) -> bool {
-        matches!(self, TreeNode::Branch(..))
-    }
+    fn is_branch(&self) -> bool { matches!(self, TreeNode::Branch(..)) }
 
-    fn is_leaf(&self) -> bool {
-        matches!(self, TreeNode::Leaf(..))
-    }
+    fn is_leaf(&self) -> bool { matches!(self, TreeNode::Leaf(..)) }
 
     fn node_hash(&self) -> TapNodeHash {
         match self {
@@ -829,9 +797,7 @@ impl Branch for PartialBranchNode {
         }
     }
 
-    fn branch_hash(&self) -> TapBranchHash {
-        self.hash
-    }
+    fn branch_hash(&self) -> TapBranchHash { self.hash }
 }
 
 impl PartialBranchNode {
@@ -876,9 +842,7 @@ impl PartialBranchNode {
 
     /// Returns node hash.
     #[inline]
-    pub fn node_hash(&self) -> TapNodeHash {
-        TapNodeHash::from_inner(self.hash.into_inner())
-    }
+    pub fn node_hash(&self) -> TapNodeHash { TapNodeHash::from_inner(self.hash.into_inner()) }
 }
 
 /// Represents information about taproot script tree when some of the branches
@@ -925,17 +889,11 @@ impl PartialTreeNode {
 
 impl Node for PartialTreeNode {
     #[inline]
-    fn is_hidden(&self) -> bool {
-        false
-    }
+    fn is_hidden(&self) -> bool { false }
 
-    fn is_branch(&self) -> bool {
-        matches!(self, PartialTreeNode::Branch(..))
-    }
+    fn is_branch(&self) -> bool { matches!(self, PartialTreeNode::Branch(..)) }
 
-    fn is_leaf(&self) -> bool {
-        matches!(self, PartialTreeNode::Leaf(..))
-    }
+    fn is_leaf(&self) -> bool { matches!(self, PartialTreeNode::Leaf(..)) }
 
     fn node_hash(&self) -> TapNodeHash {
         match self {
@@ -979,23 +937,17 @@ pub struct TaprootScriptTree {
 
 impl AsRef<TreeNode> for TaprootScriptTree {
     #[inline]
-    fn as_ref(&self) -> &TreeNode {
-        &self.root
-    }
+    fn as_ref(&self) -> &TreeNode { &self.root }
 }
 
 impl Borrow<TreeNode> for TaprootScriptTree {
     #[inline]
-    fn borrow(&self) -> &TreeNode {
-        &self.root
-    }
+    fn borrow(&self) -> &TreeNode { &self.root }
 }
 
 impl BorrowMut<TreeNode> for TaprootScriptTree {
     #[inline]
-    fn borrow_mut(&mut self) -> &mut TreeNode {
-        &mut self.root
-    }
+    fn borrow_mut(&mut self) -> &mut TreeNode { &mut self.root }
 }
 
 impl TaprootScriptTree {
@@ -1029,24 +981,18 @@ impl TaprootScriptTree {
 
     /// Returns iterator over known bitcoin_scripts stored in the tree.
     ///
-    /// NB: the iterator ignores bitcoin_scripts behind hidden nodes. It iterates the
-    /// bitcoin_scripts in DFS (and not consensus) order.
+    /// NB: the iterator ignores bitcoin_scripts behind hidden nodes. It
+    /// iterates the bitcoin_scripts in DFS (and not consensus) order.
     #[inline]
-    pub fn scripts(&self) -> TreeScriptIter {
-        TreeScriptIter::from(self)
-    }
+    pub fn scripts(&self) -> TreeScriptIter { TreeScriptIter::from(self) }
 
     /// Returns iterator over all known nodes of the tree in DFS order.
     #[inline]
-    pub fn nodes(&self) -> TreeNodeIter {
-        TreeNodeIter::from(self)
-    }
+    pub fn nodes(&self) -> TreeNodeIter { TreeNodeIter::from(self) }
 
     /// Returns mutable iterator over all known nodes of the tree in DFS order.
     #[inline]
-    pub(self) fn nodes_mut(&mut self) -> TreeNodeIterMut {
-        TreeNodeIterMut::from(self)
-    }
+    pub(self) fn nodes_mut(&mut self) -> TreeNodeIterMut { TreeNodeIterMut::from(self) }
 
     /// Returns iterator over all subnodes on a given path.
     pub fn nodes_on_path<'node, 'path>(
@@ -1241,21 +1187,15 @@ impl TaprootScriptTree {
 
     /// Returns reference to the root node of the tree.
     #[inline]
-    pub fn as_root_node(&self) -> &TreeNode {
-        &self.root
-    }
+    pub fn as_root_node(&self) -> &TreeNode { &self.root }
 
     /// Consumes the tree and returns instance of the root node of the tree.
     #[inline]
-    pub fn into_root_node(self) -> TreeNode {
-        self.root
-    }
+    pub fn into_root_node(self) -> TreeNode { self.root }
 
     /// Returns a cloned root node.
     #[inline]
-    pub fn to_root_node(&self) -> TreeNode {
-        self.root.clone()
-    }
+    pub fn to_root_node(&self) -> TreeNode { self.root.clone() }
 
     /// Experimental API!
     ///
@@ -1266,9 +1206,7 @@ impl TaprootScriptTree {
         reason = "current stable API assumes that taproot script trees always have correct \
                   structure"
     )]
-    pub fn check(&self) -> Result<(), TaprootTreeError> {
-        self.root.check()
-    }
+    pub fn check(&self) -> Result<(), TaprootTreeError> { self.root.check() }
 
     /// Experimental API!
     ///
@@ -1485,8 +1423,8 @@ enum BranchDirection {
     Deep,
 }
 
-/// Iterator over leaf bitcoin_scripts stored in the leaf nodes of the taproot script
-/// tree.
+/// Iterator over leaf bitcoin_scripts stored in the leaf nodes of the taproot
+/// script tree.
 ///
 /// NB: The bitcoin_scripts are iterated in the DFS order (not consensus).
 pub struct TreeScriptIter<'tree> {
@@ -1546,9 +1484,7 @@ impl<'tree> IntoIterator for &'tree TaprootScriptTree {
     type IntoIter = TreeScriptIter<'tree>;
 
     #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        self.scripts()
-    }
+    fn into_iter(self) -> Self::IntoIter { self.scripts() }
 }
 
 impl From<&TaprootScriptTree> for TapTree {
@@ -1565,9 +1501,7 @@ impl From<&TaprootScriptTree> for TapTree {
 
 impl From<TaprootScriptTree> for TapTree {
     #[inline]
-    fn from(tree: TaprootScriptTree) -> Self {
-        TapTree::from(&tree)
-    }
+    fn from(tree: TaprootScriptTree) -> Self { TapTree::from(&tree) }
 }
 
 #[cfg(test)]
@@ -1845,25 +1779,22 @@ mod test {
             })
             .collect::<Vec<_>>();
 
-        assert_eq!(
-            path_partners,
-            vec![
-                PartnerNode::Hash(
-                    "e1cc80c5229fa380040f65495b5a7adf102ec6b1bfe51b5c3dbda04ee258529f"
-                        .parse()
-                        .unwrap()
-                ),
-                PartnerNode::Hash(
-                    "ddad73a07b9a7725185f19d6772b02bd4b3a5525d05afde705c186cdcf588c37"
-                        .parse()
-                        .unwrap()
-                ),
-                PartnerNode::Script(s!("Script(OP_PUSHNUM_1)")),
-                PartnerNode::Script(s!("Script(OP_PUSHNUM_4)")),
-                PartnerNode::Script(s!("Script(OP_PUSHNUM_2)")),
-                PartnerNode::Script(s!("Script(OP_PUSHNUM_3)")),
-            ]
-        );
+        assert_eq!(path_partners, vec![
+            PartnerNode::Hash(
+                "e1cc80c5229fa380040f65495b5a7adf102ec6b1bfe51b5c3dbda04ee258529f"
+                    .parse()
+                    .unwrap()
+            ),
+            PartnerNode::Hash(
+                "ddad73a07b9a7725185f19d6772b02bd4b3a5525d05afde705c186cdcf588c37"
+                    .parse()
+                    .unwrap()
+            ),
+            PartnerNode::Script(s!("Script(OP_PUSHNUM_1)")),
+            PartnerNode::Script(s!("Script(OP_PUSHNUM_4)")),
+            PartnerNode::Script(s!("Script(OP_PUSHNUM_2)")),
+            PartnerNode::Script(s!("Script(OP_PUSHNUM_3)")),
+        ]);
     }
 
     #[test]

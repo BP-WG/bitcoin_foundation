@@ -53,15 +53,11 @@ impl FromHex for HashLock {
 }
 
 impl AsRef<[u8]> for HashLock {
-    fn as_ref(&self) -> &[u8] {
-        &self.0[..]
-    }
+    fn as_ref(&self) -> &[u8] { &self.0[..] }
 }
 
 impl Borrow<[u8]> for HashLock {
-    fn borrow(&self) -> &[u8] {
-        &self.0[..]
-    }
+    fn borrow(&self) -> &[u8] { &self.0[..] }
 }
 
 /// HTLC payment preimage
@@ -83,9 +79,7 @@ pub struct HashPreimage(
 
 impl HashPreimage {
     #[cfg(feature = "keygen")]
-    pub fn random() -> Self {
-        HashPreimage::from_inner(Slice32::random())
-    }
+    pub fn random() -> Self { HashPreimage::from_inner(Slice32::random()) }
 }
 
 impl FromHex for HashPreimage {
@@ -98,19 +92,13 @@ impl FromHex for HashPreimage {
 }
 
 impl DumbDefault for HashPreimage {
-    fn dumb_default() -> Self {
-        Self(Default::default())
-    }
+    fn dumb_default() -> Self { Self(Default::default()) }
 }
 
 impl AsRef<[u8]> for HashPreimage {
-    fn as_ref(&self) -> &[u8] {
-        &self.0[..]
-    }
+    fn as_ref(&self) -> &[u8] { &self.0[..] }
 }
 
 impl Borrow<[u8]> for HashPreimage {
-    fn borrow(&self) -> &[u8] {
-        &self.0[..]
-    }
+    fn borrow(&self) -> &[u8] { &self.0[..] }
 }

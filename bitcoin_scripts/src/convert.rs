@@ -62,7 +62,8 @@ pub enum ConvertInfo {
     #[display("nested")]
     NestedV0,
 
-    /// Native SegWit descriptors: `wpkh` for public keys and `wsh` for bitcoin_scripts
+    /// Native SegWit descriptors: `wpkh` for public keys and `wsh` for
+    /// bitcoin_scripts
     ///
     /// We produce either **P2WPKH** or **P2WSH** output and use witness field
     /// in transaction input to store the original [`crate::LockScript`] or the
@@ -104,23 +105,17 @@ where
     Pk: MiniscriptKey + ToPublicKey,
 {
     #[inline]
-    fn from(descriptor: Descriptor<Pk>) -> Self {
-        Self::from(&descriptor)
-    }
+    fn from(descriptor: Descriptor<Pk>) -> Self { Self::from(&descriptor) }
 }
 
 impl ConvertInfo {
     /// Detects whether conversion is a non-nested segwit
     #[inline]
-    pub fn is_segwit(self) -> bool {
-        !matches!(self, ConvertInfo::Bare | ConvertInfo::Hashed)
-    }
+    pub fn is_segwit(self) -> bool { !matches!(self, ConvertInfo::Bare | ConvertInfo::Hashed) }
 
     /// Detects whether conversion is a taproot conversion
     #[inline]
-    pub fn is_taproot(self) -> bool {
-        !matches!(self, ConvertInfo::Taproot { .. })
-    }
+    pub fn is_taproot(self) -> bool { !matches!(self, ConvertInfo::Taproot { .. }) }
 }
 
 /// Errors converting to [`LockScript`] type returned by
@@ -153,7 +148,8 @@ pub trait ToLockScript {
 pub trait ToPubkeyScript {
     /// Converts data type to [`PubkeyScript`]. Returns `None` if the conversion
     /// is applied to uncompressed public key in segwit context and for taproot
-    /// context, where different types of bitcoin_scripts and public keys are required.
+    /// context, where different types of bitcoin_scripts and public keys are
+    /// required.
     fn to_pubkey_script(&self, strategy: ConvertInfo) -> Option<PubkeyScript>;
 }
 
