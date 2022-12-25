@@ -21,10 +21,15 @@ jobs:
           override: true
           components: rustfmt
       - uses: actions-rs/cargo@v1
-        name: Formatting
+        name: Formatting blockchain
         with:
           command: fmt
-          args: --all -- --check
+          args: -p bitcoin_blockchain -- --check
+      - uses: actions-rs/cargo@v1
+        name: Formatting scripts
+        with:
+          command: fmt
+          args: -p bitcoin_scripts -- --check
   clippy:
     runs-on: ubuntu-latest
     steps:

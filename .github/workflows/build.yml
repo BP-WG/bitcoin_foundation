@@ -31,7 +31,6 @@ jobs:
       matrix:
         feature:
           - unstable
-          - miniscript
           - serde
     steps:
       - uses: actions/checkout@v2
