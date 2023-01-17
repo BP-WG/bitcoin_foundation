@@ -516,7 +516,7 @@ impl AddressNetwork {
         match self {
             AddressNetwork::Mainnet => bitcoin::Network::Bitcoin,
             AddressNetwork::Testnet => bitcoin::Network::Testnet,
-            AddressNetwork::Regtest => bitcoin::Network::Signet,
+            AddressNetwork::Regtest => bitcoin::Network::Regtest,
         }
     }
 
