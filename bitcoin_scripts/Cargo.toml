@@ -17,7 +17,7 @@ exclude = []
 crate-type = ["lib", "staticlib"]
 
 [dependencies]
-amplify = "3.13.0"
+amplify = "3.14.2"
 bitcoin = "0.29.2" # We pin this version due to an upstream bug. See setails: <https://github.com/BP-WG/descriptor-wallet/pull/40>
 secp256k1 = { version = "0.24.2", features = ["global-context"] } # Remove after bitcoin #922
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
