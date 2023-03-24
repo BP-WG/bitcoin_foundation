@@ -9,7 +9,7 @@ use crate::Scalar;
 ///
 /// This type wraps [`secp256k1::SecretKey`] to prevent accidental use in ECDSA
 /// signatures. It is mostly used to sign P2TR spends or derive P2TR addresses.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct XOnlyPrivateKey {
     key: secp256k1::SecretKey,
 }
