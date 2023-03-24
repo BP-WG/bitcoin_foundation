@@ -30,7 +30,6 @@ pub const LOCKTIME_THRESHOLD: u32 = 500000000;
 /// Time lock interval describing both relative (OP_CHECKSEQUENCEVERIFY) and
 /// absolute (OP_CHECKTIMELOCKVERIFY) timelocks.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
 pub enum TimeLockInterval {
     /// Describes number of blocks for the timelock
     #[display("height({0})")]
@@ -93,7 +92,6 @@ impl std::error::Error for ParseError {
 
 /// Value for `nSeq` field of a transaction output
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -267,7 +265,6 @@ pub struct InvalidTimelock;
 /// UNIX timestamp which is always either 0 or a greater than or equal to
 /// 500000000.
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Debug, Default)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -360,7 +357,6 @@ impl FromStr for LockTimestamp {
 /// Value for a transaction `nTimeLock` field which is guaranteed to represent a
 /// block height number which is always less than 500000000.
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Debug, Default)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -447,7 +443,6 @@ impl FromStr for LockHeight {
 /// (>=500000000) or a block height (<500000000). See alse [`LockTimestamp`] and
 /// [`LockHeight`] types.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Default)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
