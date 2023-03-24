@@ -119,7 +119,6 @@ dependencies = [
  "serde",
  "serde_with",
  "stability",
- "strict_encoding",
 ]
 
 [[package]]
