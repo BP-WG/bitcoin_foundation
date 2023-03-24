@@ -61,6 +61,7 @@ impl SegWitInfo {
 /// See also [`bitcoin::Address`] as a non-copy alternative supporting
 /// future witness program versions
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, From)]
+#[derive(StrictEncode, StrictDecode)]
 pub struct AddressCompat {
     /// Address payload (see [`AddressPayload`]).
     pub payload: AddressPayload,
@@ -129,6 +130,7 @@ impl FromStr for AddressCompat {
 #[derive(
     Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display, From
 )]
+#[derive(StrictEncode, StrictDecode)]
 pub enum AddressPayload {
     /// P2PKH payload.
     #[from]
@@ -462,6 +464,7 @@ impl FromStr for AddressFormat {
 
 /// Bitcoin network used by the address
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
+#[derive(StrictEncode, StrictDecode)]
 pub enum AddressNetwork {
     /// Bitcoin mainnet
     #[display("mainnet")]
