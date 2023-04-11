@@ -88,5 +88,6 @@ pub use convert::ConvertInfo;
 pub use parser::PubkeyParseError;
 pub use types::{
     IntoNodeHash, LeafScript, LockScript, PubkeyScript, RedeemScript, ScriptCode, ScriptSet,
-    SigScript, TapNodeHash, TapScript, WitnessProgram, WitnessScript,
+    SigScript, TapNodeHash, TapScript, TaprootWitness, TaprootWitnessError, WitnessProgram,
+    WitnessScript,
 };
