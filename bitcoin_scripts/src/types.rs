@@ -316,7 +316,7 @@ impl From<RedeemScript> for SigScript {
     #[inline]
     fn from(redeem_script: RedeemScript) -> Self {
         script::Builder::new()
-            .push_slice(redeem_script.as_bytes())
+            .push_slice(redeem_script.0.as_bytes())
             .into_script()
             .into()
     }

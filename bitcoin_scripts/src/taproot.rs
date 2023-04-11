@@ -1083,7 +1083,7 @@ impl TaprootScriptTree {
         self.update_ancestors_ordering(path);
 
         let mut path = DfsPath::with(path);
-        path.push(dfs_order);
+        path.0.push(dfs_order);
 
         Ok(path)
     }
@@ -1328,10 +1328,10 @@ impl<'tree> Iterator for TreeNodeIter<'tree> {
         let (curr, path) = self.stack.pop()?;
         if let TreeNode::Branch(branch, _) = curr {
             let mut p = path.clone();
-            p.push(DfsOrder::First);
+            p.0.push(DfsOrder::First);
             self.stack.push((branch.as_dfs_first_node(), p.clone()));
-            p.pop();
-            p.push(DfsOrder::Last);
+            p.0.pop();
+            p.0.push(DfsOrder::Last);
             self.stack.push((branch.as_dfs_last_node(), p));
         }
         Some((curr, path))
@@ -1548,12 +1548,12 @@ mod test {
         ) {
             (TreeNode::Leaf(leaf_script, 1), _, DfsOrdering::LeftRight)
             | (TreeNode::Leaf(leaf_script, 1), _, DfsOrdering::RightLeft)
-                if leaf_script.script[0] == all::OP_RETURN.to_u8() =>
+                if leaf_script.script.as_inner()[0] == all::OP_RETURN.to_u8() =>
             {
                 // Everything is fine
             }
             (_, TreeNode::Leaf(leaf_script, 1), ordering)
-                if leaf_script.script[0] == all::OP_RETURN.to_u8() =>
+                if leaf_script.script.as_inner()[0] == all::OP_RETURN.to_u8() =>
             {
                 panic!(
                     "instilled tree with script `{:?}` has incorrect DFS ordering {:?}",
@@ -1733,7 +1733,7 @@ mod test {
         }
 
         let path_partners = merged_tree
-            .nodes_on_path(&instill_path)
+            .nodes_on_path(&instill_path.0)
             .zip(&instill_path)
             .map(|(node, step)| {
                 let branch = node.unwrap().as_branch().unwrap();
