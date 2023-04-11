@@ -135,6 +135,7 @@ pub enum TaprootWitnessError {
     #[from]
     Bip341SigError(SchnorrSigError),
 
+    /// Taproot error.
     #[display(inner)]
     #[from]
     TaprootError(TaprootError),
