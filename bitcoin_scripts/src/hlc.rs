@@ -39,7 +39,7 @@ pub struct HashLock(#[cfg_attr(feature = "serde", serde(with = "As::<DisplayFrom
 impl From<HashPreimage> for HashLock {
     fn from(preimage: HashPreimage) -> Self {
         let hash = sha256::Hash::hash(preimage.as_ref());
-        Self::from_inner(Slice32::from_inner(hash.into_inner()))
+        Self::from_inner(Slice32::from_inner(*hash.as_byte_array()))
     }
 }
 

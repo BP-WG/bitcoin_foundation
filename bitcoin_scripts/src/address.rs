@@ -17,10 +17,9 @@ use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
 use amplify::Wrapper;
+use bitcoin::address::{self, Payload, WitnessProgram, WitnessVersion};
 use bitcoin::hashes::{hex, Hash};
-use bitcoin::schnorr::TweakedPublicKey;
-use bitcoin::secp256k1::XOnlyPublicKey;
-use bitcoin::util::address::{self, Payload, WitnessVersion};
+use bitcoin::key::{TweakedPublicKey, XOnlyPublicKey};
 use bitcoin::{secp256k1, Address, PubkeyHash, Script, ScriptHash, WPubkeyHash, WScriptHash};
 
 use crate::PubkeyScript;
@@ -236,18 +235,18 @@ impl From<AddressPayload> for Payload {
         match ap {
             AddressPayload::PubkeyHash(pkh) => Payload::PubkeyHash(pkh),
             AddressPayload::ScriptHash(sh) => Payload::ScriptHash(sh),
-            AddressPayload::WPubkeyHash(wpkh) => Payload::WitnessProgram {
-                version: WitnessVersion::V0,
-                program: wpkh.to_vec(),
-            },
-            AddressPayload::WScriptHash(wsh) => Payload::WitnessProgram {
-                version: WitnessVersion::V0,
-                program: wsh.to_vec(),
-            },
-            AddressPayload::Taproot { output_key } => Payload::WitnessProgram {
-                version: WitnessVersion::V1,
-                program: output_key.serialize().to_vec(),
-            },
+            AddressPayload::WPubkeyHash(wpkh) => Payload::WitnessProgram(
+                WitnessProgram::new(WitnessVersion::V0, wpkh)
+                    .expect("witness program constructed from fixed-length hash"),
+            ),
+            AddressPayload::WScriptHash(wsh) => Payload::WitnessProgram(
+                WitnessProgram::new(WitnessVersion::V0, wsh)
+                    .expect("witness program constructed from fixed-length hash"),
+            ),
+            AddressPayload::Taproot { output_key } => Payload::WitnessProgram(
+                WitnessProgram::new(WitnessVersion::V1, output_key)
+                    .expect("witness program constructed from fixed-length key"),
+            ),
         }
     }
 }
