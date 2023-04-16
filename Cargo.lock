@@ -10,6 +10,7 @@ checksum = "ba2ec14f4fb838e9ddace42fa5944bb1ee4dff8477494ba48c5f874e16caf27a"
 dependencies = [
  "amplify_derive",
  "amplify_num",
+ "amplify_syn",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -96,6 +97,7 @@ dependencies = [
  "amplify",
  "chrono",
  "serde",
+ "strict_encoding",
 ]
 
 [[package]]
@@ -252,6 +254,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a4aab4dbc9f7611d8b55048a3a16d2d010c2c8334e46304b40ac1cc14bf3b48e"
 dependencies = [
  "darling_core",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "encoding_derive_helpers"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8a2293d9a54744b73b753fad2e3c16295345504dc230696ee8aa5dbfd276ab4"
+dependencies = [
+ "amplify",
+ "proc-macro2",
  "quote",
  "syn 1.0.109",
 ]
@@ -542,6 +556,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebd1b177894da2a2d9120208c3386066af06a488255caabc5de8ddca22dbc3ce"
 dependencies = [
  "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "strict_encoding"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0be7060b49729cd0b9b2391114632ef64c363a4055d91de049f5555b466193bb"
+dependencies = [
+ "amplify",
+ "bitcoin",
+ "bitcoin_hashes",
+ "chrono",
+ "strict_encoding_derive",
+]
+
+[[package]]
+name = "strict_encoding_derive"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34c9cabafb397fc1144463228ad4ba57c3c670a0117505fe59b15d8c74449716"
+dependencies = [
+ "amplify_syn",
+ "encoding_derive_helpers",
+ "proc-macro2",
  "syn 1.0.109",
 ]
 
