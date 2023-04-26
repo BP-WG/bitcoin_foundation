@@ -16,7 +16,6 @@
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-use amplify::Wrapper;
 use bitcoin::hashes::{hex, Hash};
 use bitcoin::schnorr::TweakedPublicKey;
 use bitcoin::secp256k1::XOnlyPublicKey;
@@ -74,7 +73,7 @@ impl AddressCompat {
     /// Returns `None` if the uncompressed key is provided or `scriptPubkey`
     /// can't be represented as an address.
     pub fn from_script(script: &PubkeyScript, network: AddressNetwork) -> Option<Self> {
-        Address::from_script(script.as_inner(), network.bitcoin_network())
+        Address::from_script(script, network.bitcoin_network())
             .map_err(|_| address::Error::UncompressedPubkey)
             .and_then(Self::try_from)
             .ok()
@@ -211,7 +210,7 @@ impl AddressPayload {
     /// Constructs payload from a given `scriptPubkey`. Fails on future
     /// (post-taproot) witness types with `None`.
     pub fn from_script(script: &PubkeyScript) -> Option<Self> {
-        Address::from_script(script.as_inner(), bitcoin::Network::Bitcoin)
+        Address::from_script(script, bitcoin::Network::Bitcoin)
             .ok()
             .and_then(Self::from_address)
     }

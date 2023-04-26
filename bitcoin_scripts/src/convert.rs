@@ -221,8 +221,8 @@ impl ToPubkeyScript for LockScript {
     fn to_pubkey_script(&self, strategy: ConvertInfo) -> Option<PubkeyScript> {
         Some(match strategy {
             ConvertInfo::Bare => self.to_inner().into(),
-            ConvertInfo::Hashed => Script::new_p2sh(&self.as_inner().script_hash()).into(),
-            ConvertInfo::SegWitV0 => Script::new_v0_p2wsh(&self.as_inner().wscript_hash()).into(),
+            ConvertInfo::Hashed => Script::new_p2sh(&self.script_hash()).into(),
+            ConvertInfo::SegWitV0 => Script::new_v0_p2wsh(&self.wscript_hash()).into(),
             ConvertInfo::NestedV0 => WitnessScript::from(self.clone()).to_p2sh_wsh(),
             ConvertInfo::Taproot => return None,
         })
@@ -237,7 +237,7 @@ impl ToScripts for LockScript {
             // added later
             ConvertInfo::Bare => SigScript::default(),
             ConvertInfo::Hashed => script::Builder::new()
-                .push_slice(WitnessScript::from(self.clone()).as_inner().as_bytes())
+                .push_slice(WitnessScript::from(self.clone()).as_bytes())
                 .into_script()
                 .into(),
             ConvertInfo::NestedV0 => {
@@ -258,7 +258,7 @@ impl ToScripts for LockScript {
             ConvertInfo::Bare | ConvertInfo::Hashed => None,
             ConvertInfo::SegWitV0 | ConvertInfo::NestedV0 => {
                 let witness_script = WitnessScript::from(self.clone());
-                Some(Witness::from_vec(vec![witness_script.as_inner().to_bytes()]))
+                Some(Witness::from_vec(vec![witness_script.to_bytes()]))
             }
             ConvertInfo::Taproot => None,
         }
@@ -293,7 +293,7 @@ impl ToScripts for bitcoin::PublicKey {
                 let redeem_script =
                     LockScript::from(self.to_pubkey_script(ConvertInfo::SegWitV0)?.into_inner());
                 script::Builder::new()
-                    .push_slice(redeem_script.as_inner().as_bytes())
+                    .push_slice(redeem_script.as_bytes())
                     .into_script()
                     .into()
             }

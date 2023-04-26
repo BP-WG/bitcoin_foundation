@@ -17,7 +17,7 @@
 use std::borrow::Borrow;
 
 use amplify::hex::{Error, FromHex};
-use amplify::{Bytes32, Wrapper, Dumb};
+use amplify::{Bytes32, Dumb, Wrapper};
 use bitcoin::hashes::{sha256, Hash};
 #[cfg(feature = "serde")]
 use serde_with::{As, DisplayFromStr};

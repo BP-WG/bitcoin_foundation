@@ -1548,12 +1548,12 @@ mod test {
         ) {
             (TreeNode::Leaf(leaf_script, 1), _, DfsOrdering::LeftRight)
             | (TreeNode::Leaf(leaf_script, 1), _, DfsOrdering::RightLeft)
-                if leaf_script.script.as_inner()[0] == all::OP_RETURN.to_u8() =>
+                if leaf_script.script[0] == all::OP_RETURN.to_u8() =>
             {
                 // Everything is fine
             }
             (_, TreeNode::Leaf(leaf_script, 1), ordering)
-                if leaf_script.script.as_inner()[0] == all::OP_RETURN.to_u8() =>
+                if leaf_script.script[0] == all::OP_RETURN.to_u8() =>
             {
                 panic!(
                     "instilled tree with script `{:?}` has incorrect DFS ordering {:?}",
@@ -1738,9 +1738,7 @@ mod test {
             .map(|(node, step)| {
                 let branch = node.unwrap().as_branch().unwrap();
                 match branch.as_dfs_child_node(!step) {
-                    TreeNode::Leaf(script, _) => {
-                        PartnerNode::Script(script.script.as_inner().to_string())
-                    }
+                    TreeNode::Leaf(script, _) => PartnerNode::Script(script.script.to_string()),
                     TreeNode::Hidden(node, _) => PartnerNode::Hash(*node),
                     TreeNode::Branch(node, _) => {
                         PartnerNode::Hash(node.branch_hash().into_node_hash())
