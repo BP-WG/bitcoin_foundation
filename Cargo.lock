@@ -92,7 +92,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_blockchain"
-version = "0.10.0-alpha.2"
+version = "0.10.0"
 dependencies = [
  "amplify",
  "chrono",
@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_scripts"
-version = "0.10.0-alpha.2"
+version = "0.10.0"
 dependencies = [
  "amplify",
  "bitcoin",
