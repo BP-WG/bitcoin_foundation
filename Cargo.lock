@@ -147,6 +147,7 @@ dependencies = [
  "amplify 4.0.0",
  "chrono",
  "serde",
+ "strict_encoding",
 ]
 
 [[package]]
