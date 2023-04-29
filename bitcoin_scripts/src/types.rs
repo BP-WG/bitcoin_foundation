@@ -48,7 +48,7 @@ use bitcoin::{
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct LockScript(Script);
 
 impl strict_encoding::Strategy for LockScript {
@@ -78,7 +78,7 @@ pub struct ScriptCode(Script);
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct PubkeyScript(Script);
 
 impl strict_encoding::Strategy for PubkeyScript {
@@ -91,7 +91,7 @@ impl PubkeyScript {
     /// Address generation is not possible for bare bitcoin_scripts and P2PK; in
     /// this case the function returns `None`.
     pub fn address(&self, network: Network) -> Option<Address> {
-        Address::from_script(self.as_inner(), network).ok()
+        Address::from_script(self, network).ok()
     }
 
     /// Returns witness version of the `scriptPubkey`, if any
@@ -116,7 +116,7 @@ impl From<WPubkeyHash> for PubkeyScript {
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct SigScript(Script);
 
 impl strict_encoding::Strategy for SigScript {
@@ -316,7 +316,7 @@ impl consensus::Decodable for TaprootWitness {
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct RedeemScript(Script);
 
 impl strict_encoding::Strategy for RedeemScript {
@@ -326,7 +326,7 @@ impl strict_encoding::Strategy for RedeemScript {
 impl RedeemScript {
     /// Computes script commitment hash which participates in [`PubkeyScript`]
     #[inline]
-    pub fn script_hash(&self) -> ScriptHash { self.as_inner().script_hash() }
+    pub fn script_hash(&self) -> ScriptHash { self.as_ref().script_hash() }
 
     /// Generates [`PubkeyScript`] matching given `redeemScript`
     #[inline]
@@ -337,7 +337,7 @@ impl From<RedeemScript> for SigScript {
     #[inline]
     fn from(redeem_script: RedeemScript) -> Self {
         script::Builder::new()
-            .push_slice(redeem_script.as_bytes())
+            .push_slice(redeem_script.0.as_bytes())
             .into_script()
             .into()
     }
@@ -359,7 +359,7 @@ impl From<RedeemScript> for SigScript {
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct WitnessScript(Script);
 
 impl strict_encoding::Strategy for WitnessScript {
@@ -370,7 +370,7 @@ impl WitnessScript {
     /// Computes script commitment which participates in [`Witness`] or
     /// [`RedeemScript`].
     #[inline]
-    pub fn script_hash(&self) -> WScriptHash { self.as_inner().wscript_hash() }
+    pub fn script_hash(&self) -> WScriptHash { self.wscript_hash() }
 
     /// Generates [`PubkeyScript`] matching given `witnessScript` for native
     /// SegWit outputs.
@@ -457,7 +457,7 @@ impl LeafScript {
     /// Computes [`TapLeafHash`] for a given leaf script.
     #[inline]
     pub fn tap_leaf_hash(&self) -> TapLeafHash {
-        TapLeafHash::from_script(self.script.as_inner(), self.version)
+        TapLeafHash::from_script(&self.script, self.version)
     }
 }
 
@@ -564,9 +564,7 @@ impl ScriptSet {
     pub fn has_witness(&self) -> bool { self.witness.is_some() }
 
     /// Detects whether the structure is either P2SH-P2WPKH or P2SH-P2WSH
-    pub fn is_witness_sh(&self) -> bool {
-        return !self.sig_script.as_inner().is_empty() && self.has_witness();
-    }
+    pub fn is_witness_sh(&self) -> bool { !self.sig_script.is_empty() && self.has_witness() }
 
     /// Tries to convert witness-based script structure into pre-SegWit – and
     /// vice verse. Returns `true` if the conversion is possible and was
@@ -585,7 +583,6 @@ impl ScriptSet {
             if use_witness {
                 let witness = self
                     .sig_script
-                    .as_inner()
                     .instructions_minimal()
                     .filter_map(|instr| {
                         if let Ok(Instruction::PushBytes(bytes)) = instr {

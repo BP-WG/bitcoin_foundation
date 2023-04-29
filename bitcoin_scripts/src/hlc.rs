@@ -17,7 +17,7 @@
 use std::borrow::Borrow;
 
 use amplify::hex::{Error, FromHex};
-use amplify::{DumbDefault, Slice32, Wrapper};
+use amplify::{Bytes32, Dumb, Wrapper};
 use bitcoin::hashes::{sha256, Hash};
 #[cfg(feature = "serde")]
 use serde_with::{As, DisplayFromStr};
@@ -34,12 +34,12 @@ use serde_with::{As, DisplayFromStr};
 #[derive(StrictEncode, StrictDecode)]
 #[display(LowerHex)]
 #[wrapper(FromStr, LowerHex, UpperHex)]
-pub struct HashLock(#[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))] Slice32);
+pub struct HashLock(#[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))] Bytes32);
 
 impl From<HashPreimage> for HashLock {
     fn from(preimage: HashPreimage) -> Self {
         let hash = sha256::Hash::hash(preimage.as_ref());
-        Self::from_inner(Slice32::from_inner(hash.into_inner()))
+        Self::from_inner(Bytes32::from_inner(hash.into_inner()))
     }
 }
 
@@ -48,7 +48,7 @@ impl FromHex for HashLock {
     where
         I: Iterator<Item = Result<u8, Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
-        Ok(Self(Slice32::from_byte_iter(iter)?))
+        Ok(Self(Bytes32::from_byte_iter(iter)?))
     }
 }
 
@@ -74,12 +74,12 @@ impl Borrow<[u8]> for HashLock {
 #[display(LowerHex)]
 #[wrapper(FromStr, LowerHex, UpperHex)]
 pub struct HashPreimage(
-    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))] Slice32,
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))] Bytes32,
 );
 
 impl HashPreimage {
     #[cfg(feature = "keygen")]
-    pub fn random() -> Self { HashPreimage::from_inner(Slice32::random()) }
+    pub fn random() -> Self { HashPreimage::from_inner(Bytes32::random()) }
 }
 
 impl FromHex for HashPreimage {
@@ -87,12 +87,12 @@ impl FromHex for HashPreimage {
     where
         I: Iterator<Item = Result<u8, Error>> + ExactSizeIterator + DoubleEndedIterator,
     {
-        Ok(Self(Slice32::from_byte_iter(iter)?))
+        Ok(Self(Bytes32::from_byte_iter(iter)?))
     }
 }
 
-impl DumbDefault for HashPreimage {
-    fn dumb_default() -> Self { Self(Default::default()) }
+impl Dumb for HashPreimage {
+    fn dumb() -> Self { Self(Default::default()) }
 }
 
 impl AsRef<[u8]> for HashPreimage {
