@@ -10,7 +10,7 @@ keywords = ["bitcoin", "blockchain", "timechain", "cryptography"]
 categories = ["cryptography::cryptocurrencies", "encoding", "parsing"]
 readme = "../README.md"
 edition = "2021"
-rust-version = "1.59.0"
+rust-version = "1.69.0"
 exclude = []
 
 [lib]
