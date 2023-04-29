@@ -20,7 +20,7 @@ crate-type = ["lib", "staticlib"]
 amplify = "4.0.0"
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 strict_encoding = "0.9.0"
-chrono = { version = "0.4.24", features = ["wasmbind"] }
+chrono = { version = "0.4.24", default-features = false, features = ["wasmbind"] }
 
 [features]
 default = []
