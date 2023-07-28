@@ -49,10 +49,6 @@ use secp256k1::schnorr;
 #[wrapper(LowerHex, UpperHex)]
 pub struct LockScript(ScriptBuf);
 
-impl strict_encoding::Strategy for LockScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
-
 /// A representation of `scriptPubkey` data used during SegWit signing procedure
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
@@ -78,10 +74,6 @@ pub struct ScriptCode(ScriptBuf);
 #[display("{0}", alt = "{0:x}")]
 #[wrapper(LowerHex, UpperHex)]
 pub struct PubkeyScript(ScriptBuf);
-
-impl strict_encoding::Strategy for PubkeyScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl PubkeyScript {
     /// Generates an address matching the script and given network, if possible.
@@ -116,10 +108,6 @@ impl From<WPubkeyHash> for PubkeyScript {
 #[display("{0}", alt = "{0:x}")]
 #[wrapper(LowerHex, UpperHex)]
 pub struct SigScript(ScriptBuf);
-
-impl strict_encoding::Strategy for SigScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 /// Errors for [`TaprootWitness`] construction from [`Witness`] and byte
 /// representations
@@ -285,10 +273,6 @@ impl From<&TaprootWitness> for Witness {
     }
 }
 
-impl strict_encoding::Strategy for TaprootWitness {
-    type Strategy = strict_encoding::strategies::BitcoinConsensus;
-}
-
 impl consensus::Encodable for TaprootWitness {
     fn consensus_encode<W: Write + ?Sized>(&self, writer: &mut W) -> Result<usize, io::Error> {
         Witness::from(self).consensus_encode(writer)
@@ -316,10 +300,6 @@ impl consensus::Decodable for TaprootWitness {
 #[display("{0}", alt = "{0:x}")]
 #[wrapper(LowerHex, UpperHex)]
 pub struct RedeemScript(ScriptBuf);
-
-impl strict_encoding::Strategy for RedeemScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl RedeemScript {
     /// Computes script commitment hash which participates in [`PubkeyScript`]
@@ -359,10 +339,6 @@ impl From<RedeemScript> for SigScript {
 #[display("{0}", alt = "{0:x}")]
 #[wrapper(LowerHex, UpperHex)]
 pub struct WitnessScript(ScriptBuf);
-
-impl strict_encoding::Strategy for WitnessScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl WitnessScript {
     /// Computes script commitment which participates in [`Witness`] or
@@ -419,23 +395,6 @@ pub struct LeafScript {
     pub script: LockScript,
 }
 
-impl strict_encoding::StrictEncode for LeafScript {
-    fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, strict_encoding::Error> {
-        self.version.to_consensus().strict_encode(&mut e)?;
-        self.script.strict_encode(&mut e)
-    }
-}
-
-impl strict_encoding::StrictDecode for LeafScript {
-    fn strict_decode<D: Read>(mut d: D) -> Result<Self, strict_encoding::Error> {
-        let version = u8::strict_decode(&mut d)?;
-        let version = LeafVersion::from_consensus(version)
-            .map_err(|_| bitcoin::consensus::encode::Error::ParseFailed("invalid leaf version"))?;
-        let script = LockScript::strict_decode(d)?;
-        Ok(LeafScript { version, script })
-    }
-}
-
 impl LeafScript {
     /// Constructs tapscript.
     #[inline]
@@ -473,10 +432,6 @@ impl LeafScript {
 #[wrapper(LowerHex, UpperHex)]
 pub struct TapScript(ScriptBuf);
 
-impl strict_encoding::Strategy for TapScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
-
 impl From<LockScript> for TapScript {
     fn from(lock_script: LockScript) -> Self { TapScript(lock_script.to_inner()) }
 }
@@ -496,10 +451,6 @@ impl From<TapScript> for LeafScript {
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, From
 )]
 pub struct WitnessProgram(Box<[u8]>);
-
-impl strict_encoding::Strategy for WitnessProgram {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl Display for WitnessProgram {
     #[inline]

@@ -24,7 +24,6 @@ use amplify::Wrapper;
 use bitcoin::hashes::Hash;
 use bitcoin::taproot::{LeafVersion, TapLeafHash, TapTree, TaprootBuilder};
 use bitcoin::Script;
-use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::types::IntoNodeHash;
 use crate::{LeafScript, TapNodeHash, TapScript};
@@ -137,8 +136,6 @@ pub enum DfsTraversalError {
 /// Represents position of a child node under some parent in DFS (deep first
 /// search) order.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -171,8 +168,6 @@ impl Not for DfsOrder {
 /// the lexicographic ordering of the node hashes; but still need to keep
 /// the information about an original DFS ordering.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -208,7 +203,6 @@ impl Not for DfsOrdering {
 #[derive(
     Wrapper, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default, Debug, From
 )]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -332,7 +326,6 @@ pub trait Node {
 
 /// Ordered set of two branches under taptree node.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -469,8 +462,6 @@ impl BranchNode {
 
 /// Structure representing any complete node inside taproot script tree.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -484,22 +475,6 @@ pub enum TreeNode {
     Hidden(TapNodeHash, u8),
     /// Branch node. Keeps depth in the second tuple item.
     Branch(BranchNode, u8),
-}
-
-impl strict_encoding::StrictEncode for Box<TreeNode> {
-    fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, strict_encoding::Error> {
-        // This wierd implementation is required because of bug in rust compiler causing
-        // overflow
-        let s = self.as_ref().strict_serialize()?;
-        e.write_all(&s)?;
-        Ok(s.len())
-    }
-}
-
-impl strict_encoding::StrictDecode for Box<TreeNode> {
-    fn strict_decode<D: Read>(d: D) -> Result<Self, strict_encoding::Error> {
-        TreeNode::strict_decode(d).map(Box::new)
-    }
 }
 
 impl TreeNode {
@@ -920,7 +895,6 @@ impl Node for PartialTreeNode {
 /// The structure can be build out of (or converted into) [`TapTree`] taproot
 /// tree representation, which doesn't have a modifiable tree structure.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
