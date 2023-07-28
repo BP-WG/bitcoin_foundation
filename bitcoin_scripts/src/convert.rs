@@ -16,7 +16,7 @@
 use amplify::Wrapper;
 use bitcoin::blockdata::script;
 use bitcoin::blockdata::witness::Witness;
-use bitcoin::{secp256k1, Script};
+use bitcoin::{secp256k1, ScriptBuf};
 #[cfg(feature = "miniscript")]
 use miniscript::descriptor::DescriptorType;
 #[cfg(feature = "miniscript")]
@@ -192,7 +192,7 @@ impl ToPubkeyScript for WitnessScript {
             ConvertInfo::Bare => None,
             ConvertInfo::Hashed => None,
             ConvertInfo::NestedV0 => Some(RedeemScript::from(self.clone()).to_p2sh()),
-            ConvertInfo::SegWitV0 => Some(Script::new_v0_p2wsh(&self.script_hash()).into()),
+            ConvertInfo::SegWitV0 => Some(ScriptBuf::new_v0_p2wsh(&self.script_hash()).into()),
             ConvertInfo::Taproot => None,
         }
     }
@@ -221,8 +221,8 @@ impl ToPubkeyScript for LockScript {
     fn to_pubkey_script(&self, strategy: ConvertInfo) -> Option<PubkeyScript> {
         Some(match strategy {
             ConvertInfo::Bare => self.to_inner().into(),
-            ConvertInfo::Hashed => Script::new_p2sh(&self.script_hash()).into(),
-            ConvertInfo::SegWitV0 => Script::new_v0_p2wsh(&self.wscript_hash()).into(),
+            ConvertInfo::Hashed => ScriptBuf::new_p2sh(&self.script_hash()).into(),
+            ConvertInfo::SegWitV0 => ScriptBuf::new_v0_p2wsh(&self.wscript_hash()).into(),
             ConvertInfo::NestedV0 => WitnessScript::from(self.clone()).to_p2sh_wsh(),
             ConvertInfo::Taproot => return None,
         })
@@ -258,7 +258,7 @@ impl ToScripts for LockScript {
             ConvertInfo::Bare | ConvertInfo::Hashed => None,
             ConvertInfo::SegWitV0 | ConvertInfo::NestedV0 => {
                 let witness_script = WitnessScript::from(self.clone());
-                Some(Witness::from_vec(vec![witness_script.to_bytes()]))
+                Some(Witness::from_slice(witness_script.as_bytes()))
             }
             ConvertInfo::Taproot => None,
         }
@@ -268,8 +268,8 @@ impl ToScripts for LockScript {
 impl ToPubkeyScript for bitcoin::PublicKey {
     fn to_pubkey_script(&self, strategy: ConvertInfo) -> Option<PubkeyScript> {
         match strategy {
-            ConvertInfo::Bare => Some(Script::new_p2pk(self).into()),
-            ConvertInfo::Hashed => Some(Script::new_p2pkh(&self.pubkey_hash()).into()),
+            ConvertInfo::Bare => Some(ScriptBuf::new_p2pk(self).into()),
+            ConvertInfo::Hashed => Some(ScriptBuf::new_p2pkh(&self.pubkey_hash()).into()),
             // Uncompressed key in SegWit context
             ConvertInfo::NestedV0 | ConvertInfo::SegWitV0 if !self.compressed => None,
             ConvertInfo::NestedV0 | ConvertInfo::SegWitV0 => self.inner.to_pubkey_script(strategy),
@@ -286,7 +286,7 @@ impl ToScripts for bitcoin::PublicKey {
             // added later
             ConvertInfo::Bare => SigScript::default(),
             ConvertInfo::Hashed => script::Builder::new()
-                .push_slice(&self.to_bytes())
+                .push_slice(self.as_bytes())
                 .into_script()
                 .into(),
             ConvertInfo::NestedV0 => {
@@ -308,7 +308,7 @@ impl ToScripts for bitcoin::PublicKey {
         match strategy {
             ConvertInfo::Bare | ConvertInfo::Hashed => None,
             ConvertInfo::SegWitV0 | ConvertInfo::NestedV0 => {
-                Some(Witness::from_vec(vec![self.to_bytes()]))
+                Some(Witness::from_slice(&self.to_bytes()))
             }
             // Bitcoin public key can't be used in Taproot context
             ConvertInfo::Taproot => None,
@@ -322,13 +322,13 @@ impl ToPubkeyScript for secp256k1::PublicKey {
         let pk = bitcoin::PublicKey::new(*self);
         Some(
             match strategy {
-                ConvertInfo::Bare => Script::new_p2pk(&pk),
-                ConvertInfo::Hashed => Script::new_p2pkh(&pk.pubkey_hash()),
-                ConvertInfo::SegWitV0 => Script::new_v0_p2wpkh(&pk.wpubkey_hash()?),
+                ConvertInfo::Bare => ScriptBuf::new_p2pk(&pk),
+                ConvertInfo::Hashed => ScriptBuf::new_p2pkh(&pk.pubkey_hash()),
+                ConvertInfo::SegWitV0 => ScriptBuf::new_v0_p2wpkh(&pk.wpubkey_hash()?),
                 ConvertInfo::NestedV0 => {
-                    let pubkey_script = Script::new_p2pkh(&pk.pubkey_hash());
+                    let pubkey_script = ScriptBuf::new_p2pkh(&pk.pubkey_hash());
                     let redeem_script = RedeemScript::from_inner(pubkey_script);
-                    Script::new_p2sh(&redeem_script.script_hash())
+                    ScriptBuf::new_p2sh(&redeem_script.script_hash())
                 }
                 ConvertInfo::Taproot => return None,
             }

@@ -22,10 +22,8 @@ use std::str::FromStr;
 
 use amplify::Wrapper;
 use bitcoin::hashes::Hash;
-use bitcoin::psbt::TapTree;
-use bitcoin::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash, TaprootBuilder};
+use bitcoin::taproot::{LeafVersion, TapLeafHash, TapTree, TaprootBuilder};
 use bitcoin::Script;
-use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::types::IntoNodeHash;
 use crate::{LeafScript, TapNodeHash, TapScript};
@@ -138,8 +136,6 @@ pub enum DfsTraversalError {
 /// Represents position of a child node under some parent in DFS (deep first
 /// search) order.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -172,8 +168,6 @@ impl Not for DfsOrder {
 /// the lexicographic ordering of the node hashes; but still need to keep
 /// the information about an original DFS ordering.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -209,7 +203,6 @@ impl Not for DfsOrdering {
 #[derive(
     Wrapper, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default, Debug, From
 )]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -307,7 +300,7 @@ pub trait Branch {
     /// DFS ordering.
     fn dfs_ordering(&self) -> DfsOrdering;
     /// Computes branch hash of this branch node.
-    fn branch_hash(&self) -> TapBranchHash;
+    fn branch_hash(&self) -> TapNodeHash;
 }
 
 /// Trait for taproot tree node types.
@@ -333,7 +326,6 @@ pub trait Node {
 
 /// Ordered set of two branches under taptree node.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -359,8 +351,8 @@ impl Branch for BranchNode {
 
     fn dfs_ordering(&self) -> DfsOrdering { self.dfs_ordering }
 
-    fn branch_hash(&self) -> TapBranchHash {
-        TapBranchHash::from_node_hashes(
+    fn branch_hash(&self) -> TapNodeHash {
+        TapNodeHash::from_node_hashes(
             self.as_left_node().node_hash(),
             self.as_right_node().node_hash(),
         )
@@ -470,8 +462,6 @@ impl BranchNode {
 
 /// Structure representing any complete node inside taproot script tree.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -485,22 +475,6 @@ pub enum TreeNode {
     Hidden(TapNodeHash, u8),
     /// Branch node. Keeps depth in the second tuple item.
     Branch(BranchNode, u8),
-}
-
-impl strict_encoding::StrictEncode for Box<TreeNode> {
-    fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, strict_encoding::Error> {
-        // This wierd implementation is required because of bug in rust compiler causing
-        // overflow
-        let s = self.as_ref().strict_serialize()?;
-        e.write_all(&s)?;
-        Ok(s.len())
-    }
-}
-
-impl strict_encoding::StrictDecode for Box<TreeNode> {
-    fn strict_decode<D: Read>(d: D) -> Result<Self, strict_encoding::Error> {
-        TreeNode::strict_decode(d).map(Box::new)
-    }
 }
 
 impl TreeNode {
@@ -757,7 +731,7 @@ impl Display for TreeNode {
 /// information about its childen.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 pub struct PartialBranchNode {
-    hash: TapBranchHash,
+    hash: TapNodeHash,
     first: Option<Box<PartialTreeNode>>,
     second: Option<Box<PartialTreeNode>>,
 }
@@ -794,14 +768,14 @@ impl Branch for PartialBranchNode {
         }
     }
 
-    fn branch_hash(&self) -> TapBranchHash { self.hash }
+    fn branch_hash(&self) -> TapNodeHash { self.hash }
 }
 
 impl PartialBranchNode {
     /// Constructs partial branch node without child node information using the
     /// provided node hash data. If the child nodes are not pushed later, this
     /// will correspond to a hidden tree node.
-    pub fn with(hash: TapBranchHash) -> Self {
+    pub fn with(hash: TapNodeHash) -> Self {
         PartialBranchNode {
             hash,
             first: None,
@@ -861,7 +835,7 @@ impl PartialTreeNode {
 
     /// Constructs branch node without child information. To provide information
     /// about child nodes use [`PartialBranchNode::push_child`] method.
-    pub fn with_branch(hash: TapBranchHash, depth: u8) -> PartialTreeNode {
+    pub fn with_branch(hash: TapNodeHash, depth: u8) -> PartialTreeNode {
         PartialTreeNode::Branch(PartialBranchNode::with(hash), depth)
     }
 
@@ -921,7 +895,6 @@ impl Node for PartialTreeNode {
 /// The structure can be build out of (or converted into) [`TapTree`] taproot
 /// tree representation, which doesn't have a modifiable tree structure.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -1508,7 +1481,7 @@ mod test {
     use amplify::Wrapper;
     use bitcoin::blockdata::opcodes::all;
     use bitcoin::hashes::hex::FromHex;
-    use bitcoin::util::taproot::TaprootBuilder;
+    use bitcoin::taproot::TaprootBuilder;
 
     use super::*;
 
