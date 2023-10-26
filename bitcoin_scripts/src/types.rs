@@ -28,6 +28,8 @@ use bitcoin::{
     consensus, Address, Network, PubkeyHash, SchnorrSig, SchnorrSigError, ScriptHash, WPubkeyHash,
     WScriptHash,
 };
+#[cfg(feature = "strict_encoding")]
+use strict_encoding::{self, StrictDecode, StrictEncode};
 
 /// Script whose knowledge and satisfaction is required for spending some
 /// specific transaction output. This is the deepest nested version of Bitcoin
@@ -42,15 +44,17 @@ use bitcoin::{
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
 )]
+#[wrapper(LowerHex, UpperHex, Deref)]
+// #[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
 pub struct LockScript(Script);
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::Strategy for LockScript {
     type Strategy = strict_encoding::strategies::Wrapped;
 }
@@ -59,6 +63,7 @@ impl strict_encoding::Strategy for LockScript {
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
 )]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -72,18 +77,15 @@ pub struct ScriptCode(Script);
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
 )]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct PubkeyScript(Script);
-
-impl strict_encoding::Strategy for PubkeyScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl PubkeyScript {
     /// Generates an address matching the script and given network, if possible.
@@ -91,7 +93,7 @@ impl PubkeyScript {
     /// Address generation is not possible for bare bitcoin_scripts and P2PK; in
     /// this case the function returns `None`.
     pub fn address(&self, network: Network) -> Option<Address> {
-        Address::from_script(self.as_inner(), network).ok()
+        Address::from_script(self, network).ok()
     }
 
     /// Returns witness version of the `scriptPubkey`, if any
@@ -110,18 +112,19 @@ impl From<WPubkeyHash> for PubkeyScript {
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
 )]
+#[wrapper(LowerHex, UpperHex, Deref)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
 pub struct SigScript(Script);
 
-impl strict_encoding::Strategy for SigScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
+// impl strict_encoding::Strategy for SigScript {
+//     type Strategy = strict_encoding::strategies::Wrapped;
+// }
 
 /// Errors for [`TaprootWitness`] construction from [`Witness`] and byte
 /// representations
@@ -287,6 +290,7 @@ impl From<&TaprootWitness> for Witness {
     }
 }
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::Strategy for TaprootWitness {
     type Strategy = strict_encoding::strategies::BitcoinConsensus;
 }
@@ -310,23 +314,20 @@ impl consensus::Decodable for TaprootWitness {
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
 )]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct RedeemScript(Script);
-
-impl strict_encoding::Strategy for RedeemScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl RedeemScript {
     /// Computes script commitment hash which participates in [`PubkeyScript`]
     #[inline]
-    pub fn script_hash(&self) -> ScriptHash { self.as_inner().script_hash() }
+    pub fn script_hash(&self) -> ScriptHash { self.as_ref().script_hash() }
 
     /// Generates [`PubkeyScript`] matching given `redeemScript`
     #[inline]
@@ -353,24 +354,21 @@ impl From<RedeemScript> for SigScript {
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, Display, From
 )]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate", transparent)
 )]
 #[display("{0}", alt = "{0:x}")]
-#[wrapper(LowerHex, UpperHex)]
+#[wrapper(LowerHex, UpperHex, Deref)]
 pub struct WitnessScript(Script);
-
-impl strict_encoding::Strategy for WitnessScript {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
 
 impl WitnessScript {
     /// Computes script commitment which participates in [`Witness`] or
     /// [`RedeemScript`].
     #[inline]
-    pub fn script_hash(&self) -> WScriptHash { self.as_inner().wscript_hash() }
+    pub fn script_hash(&self) -> WScriptHash { self.wscript_hash() }
 
     /// Generates [`PubkeyScript`] matching given `witnessScript` for native
     /// SegWit outputs.
@@ -421,6 +419,7 @@ pub struct LeafScript {
     pub script: LockScript,
 }
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::StrictEncode for LeafScript {
     fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, strict_encoding::Error> {
         self.version.to_consensus().strict_encode(&mut e)?;
@@ -428,13 +427,17 @@ impl strict_encoding::StrictEncode for LeafScript {
     }
 }
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::StrictDecode for LeafScript {
     fn strict_decode<D: Read>(mut d: D) -> Result<Self, strict_encoding::Error> {
         let version = u8::strict_decode(&mut d)?;
         let version = LeafVersion::from_consensus(version)
             .map_err(|_| bitcoin::consensus::encode::Error::ParseFailed("invalid leaf version"))?;
-        let script = LockScript::strict_decode(d)?;
-        Ok(LeafScript { version, script })
+        let script = Script::strict_decode(d)?;
+        Ok(LeafScript {
+            version,
+            script: LockScript(script),
+        })
     }
 }
 
@@ -457,7 +460,7 @@ impl LeafScript {
     /// Computes [`TapLeafHash`] for a given leaf script.
     #[inline]
     pub fn tap_leaf_hash(&self) -> TapLeafHash {
-        TapLeafHash::from_script(self.script.as_inner(), self.version)
+        TapLeafHash::from_script(&self.script, self.version)
     }
 }
 
@@ -475,6 +478,7 @@ impl LeafScript {
 #[wrapper(LowerHex, UpperHex)]
 pub struct TapScript(Script);
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::Strategy for TapScript {
     type Strategy = strict_encoding::strategies::Wrapped;
 }
@@ -497,11 +501,17 @@ impl From<TapScript> for LeafScript {
 #[derive(
     Wrapper, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default, Debug, From
 )]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate", transparent)
+)]
 pub struct WitnessProgram(Box<[u8]>);
 
-impl strict_encoding::Strategy for WitnessProgram {
-    type Strategy = strict_encoding::strategies::Wrapped;
-}
+// impl strict_encoding::Strategy for WitnessProgram {
+//     type Strategy = strict_encoding::strategies::Wrapped;
+// }
 
 impl Display for WitnessProgram {
     #[inline]
@@ -564,9 +574,7 @@ impl ScriptSet {
     pub fn has_witness(&self) -> bool { self.witness.is_some() }
 
     /// Detects whether the structure is either P2SH-P2WPKH or P2SH-P2WSH
-    pub fn is_witness_sh(&self) -> bool {
-        return !self.sig_script.as_inner().is_empty() && self.has_witness();
-    }
+    pub fn is_witness_sh(&self) -> bool { !self.sig_script.is_empty() && self.has_witness() }
 
     /// Tries to convert witness-based script structure into pre-SegWit – and
     /// vice verse. Returns `true` if the conversion is possible and was
@@ -585,7 +593,6 @@ impl ScriptSet {
             if use_witness {
                 let witness = self
                     .sig_script
-                    .as_inner()
                     .instructions_minimal()
                     .filter_map(|instr| {
                         if let Ok(Instruction::PushBytes(bytes)) = instr {

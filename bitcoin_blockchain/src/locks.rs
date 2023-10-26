@@ -18,6 +18,8 @@ use core::num::ParseIntError;
 use core::str::FromStr;
 
 use chrono::Utc;
+#[cfg(feature = "strict_encoding")]
+use strict_encoding::{StrictDecode, StrictEncode};
 
 // TODO: Migrate to rust-bitcoin library
 
@@ -30,7 +32,7 @@ pub const LOCKTIME_THRESHOLD: u32 = 500000000;
 /// Time lock interval describing both relative (OP_CHECKSEQUENCEVERIFY) and
 /// absolute (OP_CHECKTIMELOCKVERIFY) timelocks.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 pub enum TimeLockInterval {
     /// Describes number of blocks for the timelock
     #[display("height({0})")]
@@ -92,8 +94,9 @@ impl std::error::Error for ParseError {
 }
 
 /// Value for `nSeq` field of a transaction output
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From)]
-#[derive(StrictEncode, StrictDecode)]
+#[derive(Wrapper, Copy, Clone, Eq, PartialEq, Hash, Debug, From)]
+#[wrapper(Deref)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -101,17 +104,9 @@ impl std::error::Error for ParseError {
 )]
 pub struct SeqNo(#[from] u32);
 
-impl From<SeqNo> for u32 {
-    fn from(seqno: SeqNo) -> Self {
-        seqno.into_consensus()
-    }
-}
-
 impl Default for SeqNo {
     #[inline]
-    fn default() -> Self {
-        SeqNo(SEQ_NO_MAX_VALUE)
-    }
+    fn default() -> Self { SeqNo(SEQ_NO_MAX_VALUE) }
 }
 
 impl PartialOrd for SeqNo {
@@ -119,7 +114,7 @@ impl PartialOrd for SeqNo {
         if self.classify() != other.classify() {
             None
         } else {
-            Some(self.0.cmp(&other.0))
+            Some(self.cmp(other))
         }
     }
 }
@@ -142,23 +137,17 @@ impl SeqNo {
 
     /// Creates `nSeq` in replace-by-fee mode with the specified order number.
     #[inline]
-    pub fn from_rbf(order: u16) -> SeqNo {
-        SeqNo(order as u32 | SEQ_NO_CSV_DISABLE_MASK)
-    }
+    pub fn from_rbf(order: u16) -> SeqNo { SeqNo(order as u32 | SEQ_NO_CSV_DISABLE_MASK) }
 
     /// Creates `nSeq` in replace-by-fee mode with value 0xFFFFFFFD.
     ///
     /// This value is the value supported by the BitBox software.
     #[inline]
-    pub fn rbf() -> SeqNo {
-        SeqNo(SEQ_NO_SUBMAX_VALUE - 1)
-    }
+    pub fn rbf() -> SeqNo { SeqNo(SEQ_NO_SUBMAX_VALUE - 1) }
 
     /// Creates relative time lock measured in number of blocks (implies RBF).
     #[inline]
-    pub fn from_height(blocks: u16) -> SeqNo {
-        SeqNo(blocks as u32)
-    }
+    pub fn from_height(blocks: u16) -> SeqNo { SeqNo(blocks as u32) }
 
     /// Creates relative time lock measured in number of 512-second intervals
     /// (implies RBF).
@@ -169,9 +158,7 @@ impl SeqNo {
 
     /// Creates time lock basing on bitcoin consensus 32-bit value.
     #[inline]
-    pub fn from_consensus(consensus: u32) -> SeqNo {
-        SeqNo(consensus)
-    }
+    pub fn from_consensus(consensus: u32) -> SeqNo { SeqNo(consensus) }
 
     /// Classifies type of `nSeq` value (see [`SeqNoClass`]).
     #[inline]
@@ -187,23 +174,17 @@ impl SeqNo {
     /// Checks if `nSeq` value opts-in for replace-by-fee (also always true for
     /// relative time locks).
     #[inline]
-    pub fn is_rbf(self) -> bool {
-        self.0 < SEQ_NO_SUBMAX_VALUE
-    }
+    pub fn is_rbf(self) -> bool { self.0 < SEQ_NO_SUBMAX_VALUE }
 
     /// Checks if `nSeq` value opts-in for relative time locks (also always
     /// imply RBG opt-in).
     #[inline]
-    pub fn is_timelock(self) -> bool {
-        self.0 & SEQ_NO_CSV_DISABLE_MASK > 1
-    }
+    pub fn is_timelock(self) -> bool { self.0 & SEQ_NO_CSV_DISABLE_MASK > 1 }
 
     /// Gets full u32 representation of `nSeq` value as it is serialized in
     /// bitcoin transaction.
     #[inline]
-    pub fn into_consensus(self) -> u32 {
-        self.0
-    }
+    pub fn into_consensus(self) -> u32 { self.0 }
 
     /// Gets structured relative time lock information from the `nSeq` value.
     /// See [`TimeLockInterval`].
@@ -291,7 +272,7 @@ pub struct InvalidTimelock;
 /// UNIX timestamp which is always either 0 or a greater than or equal to
 /// 500000000.
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Debug, Default)]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -300,9 +281,7 @@ pub struct InvalidTimelock;
 pub struct LockTimestamp(u32);
 
 impl From<LockTimestamp> for u32 {
-    fn from(lock_timestamp: LockTimestamp) -> Self {
-        lock_timestamp.into_consensus()
-    }
+    fn from(lock_timestamp: LockTimestamp) -> Self { lock_timestamp.into_consensus() }
 }
 
 impl TryFrom<u32> for LockTimestamp {
@@ -327,9 +306,7 @@ impl TryFrom<LockTime> for LockTimestamp {
 impl LockTimestamp {
     /// Create zero time lock
     #[inline]
-    pub fn anytime() -> Self {
-        Self(0)
-    }
+    pub fn anytime() -> Self { Self(0) }
 
     /// Creates absolute time lock valid since the current timestamp.
     pub fn since_now() -> Self {
@@ -354,15 +331,11 @@ impl LockTimestamp {
     /// Converts into full u32 representation of `nSeq` value as it is
     /// serialized in bitcoin transaction.
     #[inline]
-    pub fn into_consensus(self) -> u32 {
-        self.0
-    }
+    pub fn into_consensus(self) -> u32 { self.0 }
 
     /// Converts into [`LockTime`] representation.
     #[inline]
-    pub fn into_locktime(self) -> LockTime {
-        self.into()
-    }
+    pub fn into_locktime(self) -> LockTime { self.into() }
 }
 
 impl Display for LockTimestamp {
@@ -392,7 +365,7 @@ impl FromStr for LockTimestamp {
 /// Value for a transaction `nTimeLock` field which is guaranteed to represent a
 /// block height number which is always less than 500000000.
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Debug, Default)]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -401,9 +374,7 @@ impl FromStr for LockTimestamp {
 pub struct LockHeight(u32);
 
 impl From<LockHeight> for u32 {
-    fn from(lock_height: LockHeight) -> Self {
-        lock_height.into_consensus()
-    }
+    fn from(lock_height: LockHeight) -> Self { lock_height.into_consensus() }
 }
 
 impl TryFrom<u32> for LockHeight {
@@ -428,9 +399,7 @@ impl TryFrom<LockTime> for LockHeight {
 impl LockHeight {
     /// Create zero time lock
     #[inline]
-    pub fn anytime() -> Self {
-        Self(0)
-    }
+    pub fn anytime() -> Self { Self(0) }
 
     /// Creates absolute time lock with the given block height.
     ///
@@ -448,15 +417,11 @@ impl LockHeight {
     /// Converts into full u32 representation of `nSeq` value as it is
     /// serialized in bitcoin transaction.
     #[inline]
-    pub fn into_consensus(self) -> u32 {
-        self.0
-    }
+    pub fn into_consensus(self) -> u32 { self.0 }
 
     /// Converts into [`LockTime`] representation.
     #[inline]
-    pub fn into_locktime(self) -> LockTime {
-        self.into()
-    }
+    pub fn into_locktime(self) -> LockTime { self.into() }
 }
 
 impl Display for LockHeight {
@@ -487,7 +452,7 @@ impl FromStr for LockHeight {
 /// (>=500000000) or a block height (<500000000). See alse [`LockTimestamp`] and
 /// [`LockHeight`] types.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug, From, Default)]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -511,17 +476,13 @@ impl PartialOrd for LockTime {
 }
 
 impl From<LockTime> for u32 {
-    fn from(lock_time: LockTime) -> Self {
-        lock_time.into_consensus()
-    }
+    fn from(lock_time: LockTime) -> Self { lock_time.into_consensus() }
 }
 
 impl LockTime {
     /// Create zero time lock
     #[inline]
-    pub fn anytime() -> Self {
-        Self(0)
-    }
+    pub fn anytime() -> Self { Self(0) }
 
     /// Creates absolute time lock valid since the current timestamp.
     pub fn since_now() -> Self {
@@ -556,30 +517,22 @@ impl LockTime {
     }
 
     /// Constructs timelock from a bitcoin consensus 32-bit timelock value.
-    pub fn from_consensus(value: u32) -> Self {
-        Self(value)
-    }
+    pub fn from_consensus(value: u32) -> Self { Self(value) }
 
     /// Checks if the absolute timelock provided by the `nLockTime` value
     /// specifies height-based lock
     #[inline]
-    pub fn is_height_based(self) -> bool {
-        self.0 < LOCKTIME_THRESHOLD
-    }
+    pub fn is_height_based(self) -> bool { self.0 < LOCKTIME_THRESHOLD }
 
     /// Checks if the absolute timelock provided by the `nLockTime` value
     /// specifies time-based lock
     #[inline]
-    pub fn is_time_based(self) -> bool {
-        !self.is_height_based()
-    }
+    pub fn is_time_based(self) -> bool { !self.is_height_based() }
 
     /// Converts into full u32 representation of `nSeq` value as it is
     /// serialized in bitcoin transaction.
     #[inline]
-    pub fn into_consensus(self) -> u32 {
-        self.0
-    }
+    pub fn into_consensus(self) -> u32 { self.0 }
 }
 
 impl Display for LockTime {

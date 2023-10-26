@@ -16,6 +16,7 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::cmp::Ordering;
 use std::fmt::{self, Debug, Display, Formatter};
+#[cfg(feature = "strict_encoding")]
 use std::io::{Read, Write};
 use std::ops::{Deref, Not};
 use std::str::FromStr;
@@ -25,6 +26,7 @@ use bitcoin::hashes::Hash;
 use bitcoin::psbt::TapTree;
 use bitcoin::util::taproot::{LeafVersion, TapBranchHash, TapLeafHash, TaprootBuilder};
 use bitcoin::Script;
+#[cfg(feature = "strict_encoding")]
 use strict_encoding::{StrictDecode, StrictEncode};
 
 use crate::types::IntoNodeHash;
@@ -138,8 +140,7 @@ pub enum DfsTraversalError {
 /// Represents position of a child node under some parent in DFS (deep first
 /// search) order.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode), strict_encoding(by_order, repr = u8))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -172,8 +173,7 @@ impl Not for DfsOrder {
 /// the lexicographic ordering of the node hashes; but still need to keep
 /// the information about an original DFS ordering.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode), strict_encoding(by_order, repr = u8))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -209,7 +209,7 @@ impl Not for DfsOrdering {
 #[derive(
     Wrapper, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default, Debug, From
 )]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -280,7 +280,10 @@ impl IntoIterator for DfsPath {
     type Item = DfsOrder;
     type IntoIter = std::vec::IntoIter<DfsOrder>;
 
-    fn into_iter(self) -> Self::IntoIter { self.0.into_iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        let DfsPath(path) = self;
+        path.into_iter()
+    }
 }
 
 impl FromIterator<DfsOrder> for DfsPath {
@@ -333,7 +336,7 @@ pub trait Node {
 
 /// Ordered set of two branches under taptree node.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -470,8 +473,7 @@ impl BranchNode {
 
 /// Structure representing any complete node inside taproot script tree.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-#[derive(StrictEncode, StrictDecode)]
-#[strict_encoding(by_order, repr = u8)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode), strict_encoding(by_order, repr = u8))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -487,6 +489,7 @@ pub enum TreeNode {
     Branch(BranchNode, u8),
 }
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::StrictEncode for Box<TreeNode> {
     fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, strict_encoding::Error> {
         // This wierd implementation is required because of bug in rust compiler causing
@@ -497,6 +500,7 @@ impl strict_encoding::StrictEncode for Box<TreeNode> {
     }
 }
 
+#[cfg(feature = "strict_encoding")]
 impl strict_encoding::StrictDecode for Box<TreeNode> {
     fn strict_decode<D: Read>(d: D) -> Result<Self, strict_encoding::Error> {
         TreeNode::strict_decode(d).map(Box::new)
@@ -921,7 +925,7 @@ impl Node for PartialTreeNode {
 /// The structure can be build out of (or converted into) [`TapTree`] taproot
 /// tree representation, which doesn't have a modifiable tree structure.
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-#[derive(StrictEncode, StrictDecode)]
+#[cfg_attr(feature = "strict_encoding", derive(StrictEncode, StrictDecode))]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -1109,10 +1113,10 @@ impl TaprootScriptTree {
         // Update DFS ordering of the nodes above
         self.update_ancestors_ordering(path);
 
-        let mut path = DfsPath::with(path);
+        let DfsPath(mut path) = DfsPath::with(path);
         path.push(dfs_order);
 
-        Ok(path)
+        Ok(DfsPath(path))
     }
 
     /// Cuts subtree out of this tree at the `path`, returning this tree without
@@ -1354,12 +1358,13 @@ impl<'tree> Iterator for TreeNodeIter<'tree> {
     fn next(&mut self) -> Option<Self::Item> {
         let (curr, path) = self.stack.pop()?;
         if let TreeNode::Branch(branch, _) = curr {
-            let mut p = path.clone();
+            let DfsPath(mut p) = path.clone();
             p.push(DfsOrder::First);
-            self.stack.push((branch.as_dfs_first_node(), p.clone()));
+            self.stack
+                .push((branch.as_dfs_first_node(), DfsPath(p.clone())));
             p.pop();
             p.push(DfsOrder::Last);
-            self.stack.push((branch.as_dfs_last_node(), p));
+            self.stack.push((branch.as_dfs_last_node(), DfsPath(p)));
         }
         Some((curr, path))
     }
@@ -1760,7 +1765,7 @@ mod test {
         }
 
         let path_partners = merged_tree
-            .nodes_on_path(&instill_path)
+            .nodes_on_path(&instill_path.0)
             .zip(&instill_path)
             .map(|(node, step)| {
                 let branch = node.unwrap().as_branch().unwrap();

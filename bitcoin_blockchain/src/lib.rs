@@ -14,7 +14,7 @@
 
 #[macro_use]
 extern crate amplify;
-#[macro_use]
+#[cfg(feature = "strict_encoding")]
 extern crate strict_encoding;
 #[cfg(feature = "serde")]
 #[macro_use]
